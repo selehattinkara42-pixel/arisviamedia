@@ -1,50 +1,37 @@
-import { put } from '@vercel/blob'
-import { NextRequest, NextResponse } from 'next/server'
+import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
+import { NextResponse } from 'next/server';
 
-// Route segment config for handling larger request bodies
-export const dynamic = 'force-dynamic'
+export async function POST(request: Request): Promise<NextResponse> {
+    const body = (await request.json()) as HandleUploadBody;
 
-export async function POST(request: NextRequest) {
     try {
-        const { searchParams } = new URL(request.url)
-        const filename = searchParams.get('filename')
+        const jsonResponse = await handleUpload({
+            body,
+            request,
+            onBeforeGenerateToken: async (pathname, clientPayload) => {
+                // İsterseniz burada kullanıcı oturumunu kontrol edebilirsiniz
+                // const { user } = await auth();
+                // if (!user) throw new Error('Unauthorized');
 
-        if (filename && request.body) {
-            // Vercel Blob Upload
-            const blob = await put(filename, request.body, {
-                access: 'public',
-            })
+                return {
+                    allowedContentTypes: ['image/jpeg', 'image/png', 'image/gif', 'video/mp4', 'image/webp'],
+                    tokenPayload: JSON.stringify({
+                        // optional, sent to your server on upload completion
+                        // userId: user.id,
+                    }),
+                };
+            },
+            onUploadCompleted: async ({ blob, tokenPayload }) => {
+                // Dosya yüklendiğinde çalışacak kod (veritabanına kaydetme vs.)
+                console.log('blob uploaded', blob.url);
+            },
+        });
 
-            return NextResponse.json({
-                success: true,
-                url: blob.url,
-                filename: filename,
-            })
-        } else {
-            // Form Data Upload (Fallback)
-            const formData = await request.formData()
-            const file = formData.get('file') as File
-            const folder = formData.get('folder') as string || 'uploads'
-
-            if (!file) {
-                return NextResponse.json({ error: 'No file provided' }, { status: 400 })
-            }
-
-            const blob = await put(`${folder}/${file.name}`, file, {
-                access: 'public',
-            })
-
-            return NextResponse.json({
-                success: true,
-                url: blob.url,
-                filename: file.name,
-                size: file.size,
-                type: file.type
-            })
-        }
-
+        return NextResponse.json(jsonResponse);
     } catch (error) {
-        console.error('Upload error:', error)
-        return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
+        return NextResponse.json(
+            { error: (error as Error).message },
+            { status: 400 }, // The webhook will retry 5 times waiting for a 200
+        );
     }
 }

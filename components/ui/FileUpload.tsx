@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react'
 import { Upload, X, Check, Loader2, FileImage, FileVideo, File } from 'lucide-react'
+import { upload } from '@vercel/blob/client'
 
 interface FileUploadProps {
     onUpload: (url: string) => void
@@ -17,7 +18,7 @@ export default function FileUpload({
     onUpload,
     folder = 'images',
     accept = 'image/*',
-    maxSize = 50,
+    maxSize = 250, // Updated safe default for Blob
     currentUrl,
     label = 'Dosya Yükle',
     className = ''
@@ -34,81 +35,31 @@ export default function FileUpload({
         setUploading(true)
         setProgress(0)
 
-        const maxSizeBytes = maxSize * 1024 * 1024
+        // Basic size check (though Blob handles large files, it's good UX to warn)
+        if (file.size > maxSize * 1024 * 1024) {
+            setError(`Dosya boyutu ${maxSize}MB'dan büyük olamaz.`)
+            setUploading(false)
+            return
+        }
 
         try {
-            if (file.size > maxSizeBytes) {
-                // Use chunked upload for large files
-                await uploadChunked(file)
-            } else {
-                // Regular upload
-                await uploadRegular(file)
-            }
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Yükleme başarısız')
-            setUploading(false)
-        }
-    }
-
-    const uploadRegular = async (file: File) => {
-        const formData = new FormData()
-        formData.append('file', file)
-        formData.append('folder', folder)
-
-        const response = await fetch('/api/upload', {
-            method: 'POST',
-            body: formData
-        })
-
-        const result = await response.json()
-
-        if (!response.ok) {
-            throw new Error(result.error || 'Yükleme başarısız')
-        }
-
-        setProgress(100)
-        setPreview(result.url)
-        onUpload(result.url)
-        setUploading(false)
-    }
-
-    const uploadChunked = async (file: File) => {
-        const CHUNK_SIZE = 5 * 1024 * 1024 // 5MB
-        const totalChunks = Math.ceil(file.size / CHUNK_SIZE)
-        const uploadId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-
-        for (let i = 0; i < totalChunks; i++) {
-            const start = i * CHUNK_SIZE
-            const end = Math.min(start + CHUNK_SIZE, file.size)
-            const chunk = file.slice(start, end)
-
-            const formData = new FormData()
-            formData.append('chunk', chunk)
-            formData.append('chunkIndex', i.toString())
-            formData.append('totalChunks', totalChunks.toString())
-            formData.append('uploadId', uploadId)
-            formData.append('filename', file.name)
-            formData.append('folder', folder)
-
-            const response = await fetch('/api/upload/chunked', {
-                method: 'POST',
-                body: formData
+            const newBlob = await upload(file.name, file, {
+                access: 'public',
+                handleUploadUrl: '/api/upload', // Token için endpointimiz
+                onUploadProgress: (progressEvent) => {
+                    setProgress(progressEvent.percentage)
+                }
             })
 
-            const result = await response.json()
+            setProgress(100)
+            setPreview(newBlob.url)
+            onUpload(newBlob.url)
+            setUploading(false)
 
-            if (!response.ok) {
-                throw new Error(result.error || 'Chunk yükleme başarısız')
-            }
-
-            setProgress(Math.round(((i + 1) / totalChunks) * 100))
-
-            if (result.complete) {
-                setPreview(result.url)
-                onUpload(result.url)
-                setUploading(false)
-                return
-            }
+        } catch (err) {
+            console.error(err)
+            setError('Yükleme başarısız oldu. Lütfen tekrar deneyin.')
+            setUploading(false)
         }
     }
 
@@ -139,6 +90,9 @@ export default function FileUpload({
     const isImage = preview && (preview.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i) || accept.includes('image'))
     const isVideo = preview && (preview.match(/\.(mp4|webm|mov|avi)$/i) || accept.includes('video'))
 
+    // Helper to determine if we should show img/video tag or just icon
+    const showPreviewMedia = isImage || isVideo
+
     return (
         <div className={`space-y-2 ${className}`}>
             {label && <label className="block text-sm text-white/60">{label}</label>}
@@ -168,10 +122,10 @@ export default function FileUpload({
                                 controls
                             />
                         )}
-                        {!isImage && !isVideo && (
+                        {!showPreviewMedia && (
                             <div className="flex items-center justify-center h-32 bg-white/5">
                                 {getFileIcon()}
-                                <span className="ml-3 text-sm text-white/60">{preview.split('/').pop()}</span>
+                                <span className="ml-3 text-sm text-white/60 truncate max-w-[200px]">{preview.split('/').pop()}</span>
                             </div>
                         )}
 
@@ -205,7 +159,7 @@ export default function FileUpload({
                                         style={{ width: `${progress}%` }}
                                     />
                                 </div>
-                                <p className="text-xs text-white/40">%{progress} yüklendi...</p>
+                                <p className="text-xs text-white/40">%{Math.round(progress)} yüklendi...</p>
                             </div>
                         ) : (
                             <>
