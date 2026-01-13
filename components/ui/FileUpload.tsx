@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { Upload, X, Loader2, FileImage, FileVideo, File } from 'lucide-react'
 import { upload } from '@vercel/blob/client'
 
@@ -27,25 +27,26 @@ export default function FileUpload({
     const [progress, setProgress] = useState(0)
     const [error, setError] = useState<string | null>(null)
     const [preview, setPreview] = useState<string | null>(currentUrl || null)
-    const [fileType, setFileType] = useState<'image' | 'video' | 'other'>('image') // Track file type
+    const [fileType, setFileType] = useState<'image' | 'video' | 'other'>('image')
     const [dragOver, setDragOver] = useState(false)
     const inputRef = useRef<HTMLInputElement>(null)
 
-    // Determine initial file type from currentUrl if present
-    const getFileTypeFromUrl = (url: string): 'image' | 'video' | 'other' => {
-        const lowered = url.toLowerCase()
-        if (lowered.match(/\.(jpg|jpeg|png|gif|webp|svg|avif)(\?|$)/i)) return 'image'
-        if (lowered.match(/\.(mp4|webm|mov|avi|mkv)(\?|$)/i)) return 'video'
-        // Default to image for blob URLs without extension
-        return 'image'
-    }
+    // Determine file type from URL on mount (for existing uploads)
+    useEffect(() => {
+        if (currentUrl) {
+            setPreview(currentUrl)
+            // Check URL for video extensions
+            const isVideoUrl = /\.(mp4|webm|mov|avi|mkv)(\?|$)/i.test(currentUrl)
+            setFileType(isVideoUrl ? 'video' : 'image')
+        }
+    }, [currentUrl])
 
     const uploadFile = async (file: File) => {
         setError(null)
         setUploading(true)
         setProgress(0)
 
-        // Detect file type from MIME
+        // Detect file type from MIME - this is the reliable source
         const detectedType: 'image' | 'video' | 'other' =
             file.type.startsWith('image/') ? 'image' :
                 file.type.startsWith('video/') ? 'video' : 'other'
@@ -84,7 +85,7 @@ export default function FileUpload({
         setDragOver(false)
         const file = e.dataTransfer.files[0]
         if (file) uploadFile(file)
-    }, [folder])
+    }, [])
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -92,7 +93,6 @@ export default function FileUpload({
     }
 
     const clearFile = async () => {
-        // Delete blob from storage if it's a blob URL
         if (preview && preview.includes('blob.vercel-storage.com')) {
             try {
                 await fetch('/api/upload/delete', {
@@ -117,9 +117,8 @@ export default function FileUpload({
         return <File className="w-8 h-8" />
     }
 
-    // Determine display type based on tracked fileType
-    const showAsImage = preview && fileType === 'image'
-    const showAsVideo = preview && fileType === 'video'
+    // Only show video if file is actually a video, otherwise always show as image
+    const isVideo = fileType === 'video'
 
     return (
         <div className={`space-y-2 ${className}`}>
@@ -136,25 +135,23 @@ export default function FileUpload({
             >
                 {preview ? (
                     <div className="relative group">
-                        {showAsImage && (
-                            <img
-                                src={preview}
-                                alt="Preview"
-                                className="w-full h-48 object-cover"
-                            />
-                        )}
-                        {showAsVideo && (
+                        {/* ONLY render video tag if it's actually a video */}
+                        {isVideo ? (
                             <video
                                 src={preview}
                                 className="w-full h-48 object-cover"
                                 controls
                             />
-                        )}
-                        {!showAsImage && !showAsVideo && (
-                            <div className="flex items-center justify-center h-32 bg-white/5">
-                                {getFileIcon()}
-                                <span className="ml-3 text-sm text-white/60 truncate max-w-[200px]">{preview.split('/').pop()}</span>
-                            </div>
+                        ) : (
+                            <img
+                                src={preview}
+                                alt="Preview"
+                                className="w-full h-48 object-cover"
+                                onError={() => {
+                                    // If image fails to load, might be a non-standard file
+                                    setFileType('other')
+                                }}
+                            />
                         )}
 
                         {/* Overlay buttons */}
