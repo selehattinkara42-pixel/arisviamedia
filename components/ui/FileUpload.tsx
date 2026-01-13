@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { Upload, X, Check, Loader2, FileImage, FileVideo, File } from 'lucide-react'
+import { Upload, X, Loader2, FileImage, FileVideo, File } from 'lucide-react'
 import { upload } from '@vercel/blob/client'
 
 interface FileUploadProps {
@@ -18,7 +18,7 @@ export default function FileUpload({
     onUpload,
     folder = 'images',
     accept = 'image/*',
-    maxSize = 250, // Updated safe default for Blob
+    maxSize = 250,
     currentUrl,
     label = 'Dosya Yükle',
     className = ''
@@ -27,15 +27,31 @@ export default function FileUpload({
     const [progress, setProgress] = useState(0)
     const [error, setError] = useState<string | null>(null)
     const [preview, setPreview] = useState<string | null>(currentUrl || null)
+    const [fileType, setFileType] = useState<'image' | 'video' | 'other'>('image') // Track file type
     const [dragOver, setDragOver] = useState(false)
     const inputRef = useRef<HTMLInputElement>(null)
+
+    // Determine initial file type from currentUrl if present
+    const getFileTypeFromUrl = (url: string): 'image' | 'video' | 'other' => {
+        const lowered = url.toLowerCase()
+        if (lowered.match(/\.(jpg|jpeg|png|gif|webp|svg|avif)(\?|$)/i)) return 'image'
+        if (lowered.match(/\.(mp4|webm|mov|avi|mkv)(\?|$)/i)) return 'video'
+        // Default to image for blob URLs without extension
+        return 'image'
+    }
 
     const uploadFile = async (file: File) => {
         setError(null)
         setUploading(true)
         setProgress(0)
 
-        // Basic size check (though Blob handles large files, it's good UX to warn)
+        // Detect file type from MIME
+        const detectedType: 'image' | 'video' | 'other' =
+            file.type.startsWith('image/') ? 'image' :
+                file.type.startsWith('video/') ? 'video' : 'other'
+
+        setFileType(detectedType)
+
         if (file.size > maxSize * 1024 * 1024) {
             setError(`Dosya boyutu ${maxSize}MB'dan büyük olamaz.`)
             setUploading(false)
@@ -45,7 +61,7 @@ export default function FileUpload({
         try {
             const newBlob = await upload(file.name, file, {
                 access: 'public',
-                handleUploadUrl: '/api/upload', // Token için endpointimiz
+                handleUploadUrl: '/api/upload',
                 onUploadProgress: (progressEvent) => {
                     setProgress(progressEvent.percentage)
                 }
@@ -75,23 +91,35 @@ export default function FileUpload({
         if (file) uploadFile(file)
     }
 
-    const clearFile = () => {
+    const clearFile = async () => {
+        // Delete blob from storage if it's a blob URL
+        if (preview && preview.includes('blob.vercel-storage.com')) {
+            try {
+                await fetch('/api/upload/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: preview })
+                })
+            } catch (err) {
+                console.error('Failed to delete blob:', err)
+            }
+        }
+
         setPreview(null)
+        setFileType('image')
         onUpload('')
         if (inputRef.current) inputRef.current.value = ''
     }
 
     const getFileIcon = () => {
-        if (accept.includes('video')) return <FileVideo className="w-8 h-8" />
-        if (accept.includes('image')) return <FileImage className="w-8 h-8" />
+        if (fileType === 'video') return <FileVideo className="w-8 h-8" />
+        if (fileType === 'image') return <FileImage className="w-8 h-8" />
         return <File className="w-8 h-8" />
     }
 
-    const isImage = preview && (preview.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i) || accept.includes('image'))
-    const isVideo = preview && (preview.match(/\.(mp4|webm|mov|avi)$/i) || accept.includes('video'))
-
-    // Helper to determine if we should show img/video tag or just icon
-    const showPreviewMedia = isImage || isVideo
+    // Determine display type based on tracked fileType
+    const showAsImage = preview && fileType === 'image'
+    const showAsVideo = preview && fileType === 'video'
 
     return (
         <div className={`space-y-2 ${className}`}>
@@ -108,21 +136,21 @@ export default function FileUpload({
             >
                 {preview ? (
                     <div className="relative group">
-                        {isImage && (
+                        {showAsImage && (
                             <img
                                 src={preview}
                                 alt="Preview"
                                 className="w-full h-48 object-cover"
                             />
                         )}
-                        {isVideo && (
+                        {showAsVideo && (
                             <video
                                 src={preview}
                                 className="w-full h-48 object-cover"
                                 controls
                             />
                         )}
-                        {!showPreviewMedia && (
+                        {!showAsImage && !showAsVideo && (
                             <div className="flex items-center justify-center h-32 bg-white/5">
                                 {getFileIcon()}
                                 <span className="ml-3 text-sm text-white/60 truncate max-w-[200px]">{preview.split('/').pop()}</span>
@@ -132,12 +160,14 @@ export default function FileUpload({
                         {/* Overlay buttons */}
                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                             <button
+                                type="button"
                                 onClick={() => inputRef.current?.click()}
                                 className="px-4 py-2 bg-white/10 rounded-lg text-sm font-bold hover:bg-white/20 transition-colors"
                             >
                                 Değiştir
                             </button>
                             <button
+                                type="button"
                                 onClick={clearFile}
                                 className="p-2 bg-red-500/20 rounded-lg text-red-400 hover:bg-red-500/30 transition-colors"
                             >
