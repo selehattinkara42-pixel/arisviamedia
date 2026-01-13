@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model SiteSettings {
+  id             Int         @id @default(1)
+  logoUrl        String?
+  favicon        String?
+  seoTitle       String?
+  seoDescription String?
+  globalCss      String?     @db.Text
+  siteName       String      @default("Aris Via Media")
+  contactEmail   String      @default("info@arisvia.com")
+  updatedAt      DateTime    @updatedAt
+  logoConfig     LogoConfig?
+}
+
+model LogoConfig {
+  id           Int          @id @default(autoincrement())
+  width        Float        @default(150)
+  height       Float        @default(50)
+  x            Float        @default(20)
+  y            Float        @default(20)
+  visibility   String[]
+  siteSettings SiteSettings @relation(fields: [settingsId], references: [id])
+  settingsId   Int          @unique
+}
+
+model Portfolio {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  mediaUrl    String
+  category    String
+  order       Int      @default(0)
+  isVisible   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Package {
+  id        Int      @id @default(autoincrement())
+  name      String
+  price     Decimal  @db.Decimal(10, 2)
+  features  String[]
+  badge     String?
+  isVisible Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Testimonial {
+  id        Int      @id @default(autoincrement())
+  name      String
+  role      String
+  company   String
+  content   String   @db.Text
+  avatarUrl String?
+  rating    Int      @default(5)
+  isVisible Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ContactSubmission {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  subject   String?
+  message   String   @db.Text
+  status    String   @default("UNREAD") // UNREAD, READ, ARCHIVED
+  createdAt DateTime @default(now())
+}
+
+model SectionConfig {
+  id        String   @id // e.g., "home-hero", "home-portfolio"
+  name      String   // Display name
+  isVisible Boolean  @default(true)
+  order     Int      @default(0)
+  updatedAt DateTime @updatedAt
+}
+
+model DynamicContent {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+}
+
+model HeroCard {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  icon        String   @default("Zap") // Lucide icon name
+  iconColor   String   @default("#D4AF37") // Hex color
+  order       Int      @default(0)
+  isVisible   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
