@@ -15,9 +15,15 @@ export async function getPackages() {
     if (!prisma) return []
 
     try {
-        return await prisma.package.findMany({
+        const packages = await prisma.package.findMany({
             orderBy: { price: 'asc' }
         })
+
+        // Convert Decimal to number for client usage
+        return packages.map(pkg => ({
+            ...pkg,
+            price: Number(pkg.price)
+        }))
     } catch (error) {
         console.error("Failed to fetch packages:", error)
         return []
@@ -42,7 +48,14 @@ export async function createPackage(data: PackageData) {
         revalidatePath('/admin/packages')
         revalidatePath('/paketler')
         revalidatePath('/')
-        return { success: true, data: newPackage }
+
+        return {
+            success: true,
+            data: {
+                ...newPackage,
+                price: Number(newPackage.price)
+            }
+        }
     } catch (error) {
         console.error("Failed to create package:", error)
         return { success: false, error: "Paket oluşturulamadı. Veritabanı hatası." }
@@ -62,7 +75,14 @@ export async function updatePackage(id: number, data: Partial<PackageData>) {
         revalidatePath('/admin/packages')
         revalidatePath('/paketler')
         revalidatePath('/')
-        return { success: true, data: updated }
+
+        return {
+            success: true,
+            data: {
+                ...updated,
+                price: Number(updated.price)
+            }
+        }
     } catch (error) {
         console.error("Failed to update package:", error)
         return { success: false, error: "Paket güncellenemedi. Veritabanı hatası." }

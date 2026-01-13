@@ -11,7 +11,7 @@ export default async function AdminPackagesPage() {
                 <p className="text-white/40">Müşterilerinize sunduğunuz hizmet paketlerini ve fiyatlandırmayı yönetin.</p>
             </header>
 
-            <PackageManager initialPackages={packages as any} />
+            <PackageManager initialPackages={packages} />
         </div>
     )
 }
