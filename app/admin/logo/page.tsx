@@ -1,14 +1,9 @@
+import { getLogoConfig } from '@/app/actions/logo'
 import LogoEditor from './LogoEditor'
 
-const defaultConfig = {
-    width: 150,
-    height: 50,
-    x: 20,
-    y: 20,
-    visibility: ['desktop', 'tablet', 'mobile']
-}
+export default async function LogoSettingsPage() {
+    const config = await getLogoConfig()
 
-export default function LogoSettingsPage() {
     return (
         <div className="space-y-6 h-full">
             <header>
@@ -16,7 +11,7 @@ export default function LogoSettingsPage() {
                 <p className="text-white/40">Logonuzun tüm cihazlardaki boyutunu ve konumunu piksel hassasiyetiyle ayarlayın.</p>
             </header>
 
-            <LogoEditor initialConfig={defaultConfig} />
+            <LogoEditor initialConfig={config} />
         </div>
     )
 }

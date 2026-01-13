@@ -1,10 +1,10 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Trash2, Edit, Plus, Image as ImageIcon, X, Save, Check, AlertCircle } from 'lucide-react'
 import FileUpload from '@/components/ui/FileUpload'
-import { getLocalPortfolio, setLocalPortfolio, generateId } from '@/lib/localData'
+import { createPortfolioItem, updatePortfolioItem, deletePortfolioItem } from '@/app/actions/portfolio'
 
 type PortfolioItem = {
     id: number
@@ -18,25 +18,11 @@ type PortfolioItem = {
 
 export default function PortfolioManager({ initialItems }: { initialItems: PortfolioItem[] }) {
     const [items, setItems] = useState<PortfolioItem[]>(initialItems)
-    const [isEditing, setIsEditing] = useState<number | null>(null)
+    const [isEditing, setIsEditing] = useState<PortfolioItem | null>(null)
+    const [isCreating, setIsCreating] = useState(false)
     const [formData, setFormData] = useState<Partial<PortfolioItem>>({})
     const [isLoading, setIsLoading] = useState(false)
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
-
-    // Load from localStorage on mount
-    useEffect(() => {
-        const localItems = getLocalPortfolio()
-        if (localItems.length > 0) {
-            setItems(localItems as PortfolioItem[])
-        }
-    }, [])
-
-    // Save to localStorage whenever items change
-    useEffect(() => {
-        if (items.length > 0) {
-            setLocalPortfolio(items as any)
-        }
-    }, [items])
 
     const showMessage = (type: 'success' | 'error', text: string) => {
         setMessage({ type, text })
@@ -45,7 +31,8 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
 
     const handleEdit = (item: PortfolioItem) => {
         setFormData(item)
-        setIsEditing(item.id)
+        setIsEditing(item)
+        setIsCreating(false)
     }
 
     const handleNew = () => {
@@ -56,10 +43,11 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
             category: 'Video Production',
             order: items.length
         })
-        setIsEditing(-1)
+        setIsCreating(true)
+        setIsEditing(null)
     }
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!formData.title?.trim()) {
             showMessage('error', 'Başlık gereklidir.')
             return
@@ -67,33 +55,67 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
 
         setIsLoading(true)
 
-        if (isEditing === -1) {
-            // Create new
-            const newItem: PortfolioItem = {
-                id: generateId(),
-                title: formData.title || '',
-                description: formData.description || '',
-                mediaUrl: formData.mediaUrl || '',
-                category: formData.category || 'Video Production',
-                order: items.length,
-                isVisible: true
+        try {
+            if (isCreating) {
+                // Create new
+                const result = await createPortfolioItem({
+                    title: formData.title!,
+                    description: formData.description || '',
+                    mediaUrl: formData.mediaUrl || '',
+                    category: formData.category || 'Video Production',
+                    order: formData.order || 0
+                })
+
+                if (result.success && result.data) {
+                    setItems([...items, result.data as PortfolioItem])
+                    showMessage('success', 'Proje başarıyla oluşturuldu!')
+                    closeModal()
+                } else {
+                    showMessage('error', 'Proje oluşturulamadı.')
+                }
+            } else if (isEditing) {
+                // Update existing
+                const result = await updatePortfolioItem(isEditing.id, {
+                    title: formData.title,
+                    description: formData.description,
+                    mediaUrl: formData.mediaUrl,
+                    category: formData.category,
+                    order: formData.order,
+                    isVisible: isEditing.isVisible
+                })
+
+                if (result.success && result.data) {
+                    setItems(items.map(i => i.id === isEditing.id ? result.data as PortfolioItem : i))
+                    showMessage('success', 'Proje başarıyla güncellendi!')
+                    closeModal()
+                } else {
+                    showMessage('error', 'Proje güncellenemedi.')
+                }
             }
-            setItems([...items, newItem])
-            showMessage('success', 'Proje başarıyla oluşturuldu!')
-        } else if (isEditing !== null) {
-            // Update existing
-            setItems(items.map(i => i.id === isEditing ? { ...i, ...formData } as PortfolioItem : i))
-            showMessage('success', 'Proje başarıyla güncellendi!')
+        } catch (error) {
+            console.error(error)
+            showMessage('error', 'Bir hata oluştu.')
         }
 
-        setIsEditing(null)
         setIsLoading(false)
     }
 
-    const handleDelete = (id: number) => {
+    const handleDelete = async (id: number) => {
         if (!confirm('Bu projeyi silmek istediğinize emin misiniz?')) return
-        setItems(items.filter(i => i.id !== id))
-        showMessage('success', 'Proje silindi.')
+
+        const result = await deletePortfolioItem(id)
+        if (result.success) {
+            setItems(items.filter(i => i.id !== id))
+            showMessage('success', 'Proje silindi.')
+        } else {
+            showMessage('error', 'Silme işlemi başarısız.')
+        }
+    }
+
+    const closeModal = () => {
+        setIsEditing(null)
+        setIsCreating(false)
+        setFormData({})
     }
 
     return (
@@ -106,8 +128,8 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
                         className={`fixed top-24 right-8 z-[200] px-6 py-3 rounded-xl flex items-center gap-3 shadow-lg ${message.type === 'success'
-                                ? 'bg-green-500/20 border border-green-500/50 text-green-400'
-                                : 'bg-red-500/20 border border-red-500/50 text-red-400'
+                            ? 'bg-green-500/20 border border-green-500/50 text-green-400'
+                            : 'bg-red-500/20 border border-red-500/50 text-red-400'
                             }`}
                     >
                         {message.type === 'success' ? <Check size={18} /> : <AlertCircle size={18} />}
@@ -118,7 +140,8 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
 
             <div className="flex justify-between items-center mb-8">
                 <div>
-                    <p className="text-white/40 text-sm mt-1">{items.length} proje</p>
+                    <h2 className="text-2xl font-display font-bold">Portfolyo Yönetimi</h2>
+                    <p className="text-white/40 text-sm mt-1">{items.length} proje listeleniyor</p>
                 </div>
                 <button
                     onClick={handleNew}
@@ -126,13 +149,6 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
                 >
                     <Plus size={16} /> Yeni Ekle
                 </button>
-            </div>
-
-            {/* Info Banner */}
-            <div className="glass-card p-4 border-blue-500/30 bg-blue-500/5">
-                <p className="text-blue-400 text-sm">
-                    💡 Projeler tarayıcınızda kaydedilir. Sayfayı yenileseniz bile veriler korunur.
-                </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -186,7 +202,7 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
             </div>
 
             {/* Editor Modal */}
-            {isEditing !== null && (
+            {(isEditing || isCreating) && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
                     <motion.div
                         initial={{ opacity: 0, y: 50 }}
@@ -194,14 +210,14 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
                         className="glass-panel w-full max-w-2xl p-8 border border-white/20 relative max-h-[90vh] overflow-y-auto"
                     >
                         <button
-                            onClick={() => setIsEditing(null)}
+                            onClick={closeModal}
                             className="absolute top-4 right-4 text-white/40 hover:text-white transition-colors"
                         >
                             <X size={24} />
                         </button>
 
                         <h3 className="text-2xl font-display font-bold mb-6">
-                            {isEditing === -1 ? 'Yeni Proje Oluştur' : 'Projeyi Düzenle'}
+                            {isCreating ? 'Yeni Proje Oluştur' : 'Projeyi Düzenle'}
                         </h3>
 
                         <div className="space-y-6">
@@ -265,7 +281,7 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
 
                             <div className="pt-6 flex justify-end gap-3 border-t border-white/10">
                                 <button
-                                    onClick={() => setIsEditing(null)}
+                                    onClick={closeModal}
                                     className="px-6 py-3 rounded-xl hover:bg-white/5 text-white/60 transition-colors text-sm font-bold"
                                 >
                                     İptal

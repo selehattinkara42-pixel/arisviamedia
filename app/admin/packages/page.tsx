@@ -1,7 +1,9 @@
-import { defaults } from '@/lib/localData'
+import { getPackages } from '@/app/actions/packages'
 import PackageManager from './PackageManager'
 
-export default function AdminPackagesPage() {
+export default async function AdminPackagesPage() {
+    const packages = await getPackages()
+
     return (
         <div className="space-y-6 h-full">
             <header>
@@ -9,7 +11,7 @@ export default function AdminPackagesPage() {
                 <p className="text-white/40">Müşterilerinize sunduğunuz hizmet paketlerini ve fiyatlandırmayı yönetin.</p>
             </header>
 
-            <PackageManager initialPackages={defaults.packages as any} />
+            <PackageManager initialPackages={packages as any} />
         </div>
     )
 }

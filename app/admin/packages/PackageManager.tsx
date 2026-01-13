@@ -1,9 +1,9 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Trash2, Edit, Plus, Check, Star, Save, X, AlertCircle } from 'lucide-react'
-import { getLocalPackages, setLocalPackages, generateId } from '@/lib/localData'
+import { createPackage, updatePackage, deletePackage } from '@/app/actions/packages'
 
 type PackageItem = {
     id: number
@@ -16,26 +16,12 @@ type PackageItem = {
 
 export default function PackageManager({ initialPackages }: { initialPackages: PackageItem[] }) {
     const [packages, setPackages] = useState<PackageItem[]>(initialPackages)
-    const [isEditing, setIsEditing] = useState<number | null>(null)
+    const [isEditing, setIsEditing] = useState<PackageItem | null>(null)
+    const [isCreating, setIsCreating] = useState(false)
     const [formData, setFormData] = useState<Partial<PackageItem> & { priceNum: string }>({ priceNum: '0' })
     const [isLoading, setIsLoading] = useState(false)
     const [featureInput, setFeatureInput] = useState('')
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
-
-    // Load from localStorage on mount
-    useEffect(() => {
-        const localPackages = getLocalPackages()
-        if (localPackages.length > 0) {
-            setPackages(localPackages as PackageItem[])
-        }
-    }, [])
-
-    // Save to localStorage whenever packages change
-    useEffect(() => {
-        if (packages.length > 0) {
-            setLocalPackages(packages as any)
-        }
-    }, [packages])
 
     const showMessage = (type: 'success' | 'error', text: string) => {
         setMessage({ type, text })
@@ -47,7 +33,8 @@ export default function PackageManager({ initialPackages }: { initialPackages: P
             ...pkg,
             priceNum: pkg.price.toString()
         })
-        setIsEditing(pkg.id)
+        setIsEditing(pkg)
+        setIsCreating(false)
     }
 
     const handleNew = () => {
@@ -57,7 +44,8 @@ export default function PackageManager({ initialPackages }: { initialPackages: P
             features: [],
             badge: ''
         })
-        setIsEditing(-1)
+        setIsCreating(true)
+        setIsEditing(null)
     }
 
     const addFeature = () => {
@@ -72,7 +60,7 @@ export default function PackageManager({ initialPackages }: { initialPackages: P
         setFormData({ ...formData, features: currentFeatures.filter((_, i) => i !== index) })
     }
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!formData.name?.trim()) {
             showMessage('error', 'Paket adı gerekli!')
             return
@@ -80,38 +68,65 @@ export default function PackageManager({ initialPackages }: { initialPackages: P
 
         setIsLoading(true)
 
-        if (isEditing === -1) {
-            // Create new
-            const newPackage: PackageItem = {
-                id: generateId(),
-                name: formData.name!,
-                price: parseFloat(formData.priceNum) || 0,
-                features: formData.features || [],
-                badge: formData.badge || null,
-                isVisible: true
+        try {
+            if (isCreating) {
+                // Create
+                const result = await createPackage({
+                    name: formData.name!,
+                    price: parseFloat(formData.priceNum) || 0,
+                    features: formData.features || [],
+                    badge: formData.badge || null
+                })
+
+                if (result.success && result.data) {
+                    setPackages([...packages, result.data as PackageItem])
+                    showMessage('success', 'Paket oluşturuldu!')
+                    closeModal()
+                } else {
+                    showMessage('error', 'Paket oluşturulamadı.')
+                }
+            } else if (isEditing) {
+                // Update
+                const result = await updatePackage(isEditing.id, {
+                    name: formData.name,
+                    price: parseFloat(formData.priceNum) || 0,
+                    features: formData.features,
+                    badge: formData.badge,
+                    isVisible: isEditing.isVisible
+                })
+
+                if (result.success && result.data) {
+                    setPackages(packages.map(p => p.id === isEditing.id ? result.data as PackageItem : p))
+                    showMessage('success', 'Paket güncellendi!')
+                    closeModal()
+                } else {
+                    showMessage('error', 'Paket güncellenemedi.')
+                }
             }
-            setPackages([...packages, newPackage])
-            showMessage('success', 'Paket oluşturuldu!')
-        } else if (isEditing !== null) {
-            // Update
-            setPackages(packages.map(p => p.id === isEditing ? {
-                ...p,
-                name: formData.name!,
-                price: parseFloat(formData.priceNum) || 0,
-                features: formData.features || [],
-                badge: formData.badge || null
-            } : p))
-            showMessage('success', 'Paket güncellendi!')
+        } catch (error) {
+            console.error(error)
+            showMessage('error', 'Bir hata oluştu.')
         }
 
-        setIsEditing(null)
         setIsLoading(false)
     }
 
-    const handleDelete = (id: number) => {
+    const handleDelete = async (id: number) => {
         if (!confirm('Bu paketi silmek istediğinize emin misiniz?')) return
-        setPackages(packages.filter(p => p.id !== id))
-        showMessage('success', 'Paket silindi.')
+
+        const result = await deletePackage(id)
+        if (result.success) {
+            setPackages(packages.filter(p => p.id !== id))
+            showMessage('success', 'Paket silindi.')
+        } else {
+            showMessage('error', 'Silme işlemi başarısız.')
+        }
+    }
+
+    const closeModal = () => {
+        setIsEditing(null)
+        setIsCreating(false)
+        setFormData({ priceNum: '0' })
     }
 
     return (
@@ -122,8 +137,8 @@ export default function PackageManager({ initialPackages }: { initialPackages: P
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className={`fixed top-24 right-8 z-[200] px-6 py-3 rounded-xl flex items-center gap-3 shadow-lg ${message.type === 'success'
-                            ? 'bg-green-500/20 border border-green-500/50 text-green-400'
-                            : 'bg-red-500/20 border border-red-500/50 text-red-400'
+                        ? 'bg-green-500/20 border border-green-500/50 text-green-400'
+                        : 'bg-red-500/20 border border-red-500/50 text-red-400'
                         }`}
                 >
                     {message.type === 'success' ? <Check size={18} /> : <AlertCircle size={18} />}
@@ -136,13 +151,6 @@ export default function PackageManager({ initialPackages }: { initialPackages: P
                 <button onClick={handleNew} className="btn-premium px-4 py-2 flex items-center gap-2">
                     <Plus size={16} /> Yeni Paket
                 </button>
-            </div>
-
-            {/* Info Banner */}
-            <div className="glass-card p-4 border-blue-500/30 bg-blue-500/5">
-                <p className="text-blue-400 text-sm">
-                    💡 Paketler tarayıcınızda kaydedilir. Sayfayı yenileseniz bile veriler korunur.
-                </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -194,15 +202,15 @@ export default function PackageManager({ initialPackages }: { initialPackages: P
             </div>
 
             {/* Editor Modal */}
-            {isEditing !== null && (
+            {(isEditing || isCreating) && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
                     <motion.div
                         initial={{ opacity: 0, y: 50 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="glass-panel w-full max-w-xl p-8 border border-white/20 relative max-h-[90vh] overflow-y-auto"
                     >
-                        <button onClick={() => setIsEditing(null)} className="absolute top-4 right-4 text-white/40 hover:text-white"><X size={24} /></button>
-                        <h3 className="text-2xl font-display font-bold mb-6">{isEditing === -1 ? 'Yeni Paket Oluştur' : 'Paketi Düzenle'}</h3>
+                        <button onClick={closeModal} className="absolute top-4 right-4 text-white/40 hover:text-white"><X size={24} /></button>
+                        <h3 className="text-2xl font-display font-bold mb-6">{isCreating ? 'Yeni Paket Oluştur' : 'Paketi Düzenle'}</h3>
 
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
@@ -266,7 +274,7 @@ export default function PackageManager({ initialPackages }: { initialPackages: P
                             </div>
 
                             <div className="pt-6 flex justify-end gap-3">
-                                <button onClick={() => setIsEditing(null)} className="px-6 py-3 rounded-xl hover:bg-white/5 text-white/60 font-bold text-sm">İptal</button>
+                                <button onClick={closeModal} className="px-6 py-3 rounded-xl hover:bg-white/5 text-white/60 font-bold text-sm">İptal</button>
                                 <button onClick={handleSave} disabled={isLoading} className="btn-premium px-8 py-3 flex items-center gap-2">
                                     <Save size={16} /> Kaydet
                                 </button>

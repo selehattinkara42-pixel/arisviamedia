@@ -1,9 +1,10 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Save, Globe, Code, Image as ImageIcon, Loader2, Check, AlertCircle } from 'lucide-react'
 import FileUpload from '@/components/ui/FileUpload'
+import { updateSiteSettings } from '@/app/actions/settings'
 
 type Settings = {
     seoTitle: string
@@ -22,38 +23,34 @@ const defaultSettings: Settings = {
 }
 
 export default function SettingsForm({ initialSettings }: { initialSettings?: Partial<Settings> }) {
-    const [formData, setFormData] = useState<Settings>(defaultSettings)
+    const [formData, setFormData] = useState<Settings>({ ...defaultSettings, ...initialSettings })
     const [isLoading, setIsLoading] = useState(false)
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
-
-    // Load from localStorage on mount
-    useEffect(() => {
-        try {
-            const stored = localStorage.getItem('arisvia_settings')
-            if (stored) {
-                const parsed = JSON.parse(stored)
-                setFormData({ ...defaultSettings, ...parsed })
-            } else if (initialSettings) {
-                setFormData({ ...defaultSettings, ...initialSettings })
-            }
-        } catch (e) {
-            console.error('Error loading settings:', e)
-        }
-    }, [initialSettings])
 
     const showMessage = (type: 'success' | 'error', text: string) => {
         setMessage({ type, text })
         setTimeout(() => setMessage(null), 4000)
     }
 
-    const handleSave = () => {
+    const handleSave = async () => {
         setIsLoading(true)
 
         try {
-            localStorage.setItem('arisvia_settings', JSON.stringify(formData))
-            showMessage('success', 'Ayarlar başarıyla kaydedildi!')
+            const result = await updateSiteSettings({
+                seoTitle: formData.seoTitle,
+                seoDescription: formData.seoDescription,
+                logoUrl: formData.logoUrl,
+                favicon: formData.favicon,
+                globalCss: formData.globalCss
+            })
+
+            if (result.success) {
+                showMessage('success', 'Ayarlar başarıyla kaydedildi!')
+            } else {
+                showMessage('error', 'Ayarlar kaydedilemedi.')
+            }
         } catch (e) {
-            showMessage('error', 'Ayarlar kaydedilemedi.')
+            showMessage('error', 'Bir hata oluştu.')
         }
 
         setIsLoading(false)
@@ -67,8 +64,8 @@ export default function SettingsForm({ initialSettings }: { initialSettings?: Pa
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className={`fixed top-24 right-8 z-[200] px-6 py-3 rounded-xl flex items-center gap-3 shadow-lg ${message.type === 'success'
-                            ? 'bg-green-500/20 border border-green-500/50 text-green-400'
-                            : 'bg-red-500/20 border border-red-500/50 text-red-400'
+                        ? 'bg-green-500/20 border border-green-500/50 text-green-400'
+                        : 'bg-red-500/20 border border-red-500/50 text-red-400'
                         }`}
                 >
                     {message.type === 'success' ? <Check size={18} /> : <AlertCircle size={18} />}
@@ -150,7 +147,7 @@ export default function SettingsForm({ initialSettings }: { initialSettings?: Pa
                             <textarea
                                 className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-primary-gold/50 min-h-[300px] font-mono text-xs"
                                 placeholder=":root { --primary-gold: #ff0000; }"
-                                value={formData.globalCss}
+                                value={formData.globalCss || ''}
                                 onChange={e => setFormData({ ...formData, globalCss: e.target.value })}
                             />
                         </div>
@@ -164,10 +161,6 @@ export default function SettingsForm({ initialSettings }: { initialSettings?: Pa
                         {isLoading ? <Loader2 className="animate-spin" /> : <Save />}
                         Ayarları Kaydet
                     </button>
-
-                    <p className="text-center text-white/40 text-xs">
-                        💡 Ayarlar tarayıcınızda kaydedilir.
-                    </p>
                 </div>
             </div>
         </div>

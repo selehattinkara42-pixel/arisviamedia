@@ -1,9 +1,10 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Save, RefreshCw, Smartphone, Monitor, Check, Upload } from 'lucide-react'
+import { Save, RefreshCw, Smartphone, Monitor, Check } from 'lucide-react'
 import FileUpload from '@/components/ui/FileUpload'
+import { updateLogoConfig } from '@/app/actions/logo'
 
 type LogoConfig = {
     logoUrl: string
@@ -23,63 +24,40 @@ const defaultConfig: LogoConfig = {
     visibility: ['home', 'portfolio', 'packages']
 }
 
-const SimpleSlider = ({ value, min, max, onChange, label }: any) => (
-    <div className="mb-6">
-        <div className="flex justify-between mb-2">
-            <label className="text-xs font-bold uppercase tracking-widest text-white/40">{label}</label>
-            <span className="text-xs font-mono text-primary-gold">{value}px</span>
-        </div>
-        <input
-            type="range"
-            min={min}
-            max={max}
-            value={value}
-            onChange={(e) => onChange(Number(e.target.value))}
-            className="w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary-gold"
-        />
-    </div>
-)
-
 export default function LogoEditor({ initialConfig }: { initialConfig?: any }) {
-    const [config, setConfig] = useState<LogoConfig>(defaultConfig)
+    const [config, setConfig] = useState<LogoConfig>({ ...defaultConfig, ...initialConfig })
     const [isSaving, setIsSaving] = useState(false)
     const [saved, setSaved] = useState(false)
     const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
 
-    // Load from localStorage on mount
-    useEffect(() => {
-        try {
-            const stored = localStorage.getItem('arisvia_logo_config')
-            if (stored) {
-                const parsed = JSON.parse(stored)
-                setConfig({ ...defaultConfig, ...parsed })
-            }
-        } catch (e) {
-            console.error('Error loading logo config:', e)
-        }
-    }, [])
+    const SimpleSlider = ({ value, min, max, onChange, label }: any) => (
+        <div className="mb-6">
+            <div className="flex justify-between mb-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-white/40">{label}</label>
+                <span className="text-xs font-mono text-primary-gold">{value}px</span>
+            </div>
+            <input
+                type="range"
+                min={min}
+                max={max}
+                value={value}
+                onChange={(e) => onChange(Number(e.target.value))}
+                className="w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary-gold"
+            />
+        </div>
+    )
 
-    // Auto-save when config changes
-    useEffect(() => {
-        const timeout = setTimeout(() => {
-            try {
-                localStorage.setItem('arisvia_logo_config', JSON.stringify(config))
-            } catch (e) {
-                console.error('Error saving logo config:', e)
-            }
-        }, 500)
-        return () => clearTimeout(timeout)
-    }, [config])
-
-    const handleSave = () => {
+    const handleSave = async () => {
         setIsSaving(true)
 
         try {
-            localStorage.setItem('arisvia_logo_config', JSON.stringify(config))
-            setSaved(true)
-            setTimeout(() => setSaved(false), 2000)
-            // Trigger a page reload to apply changes to Navbar
-            window.dispatchEvent(new Event('logoConfigUpdated'))
+            const result = await updateLogoConfig(config)
+            if (result.success) {
+                setSaved(true)
+                setTimeout(() => setSaved(false), 2000)
+                // Trigger a page reload to apply changes to Navbar
+                window.location.reload()
+            }
         } catch (e) {
             console.error('Error saving logo config:', e)
         }
@@ -165,10 +143,6 @@ export default function LogoEditor({ initialConfig }: { initialConfig?: any }) {
                     {saved ? <Check size={18} /> : isSaving ? <RefreshCw className="animate-spin" size={18} /> : <Save size={18} />}
                     {saved ? 'Kaydedildi!' : isSaving ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet'}
                 </button>
-
-                <p className="text-center text-white/40 text-xs mt-4">
-                    💡 Değişiklikler otomatik olarak kaydedilir.
-                </p>
             </div>
 
             {/* Live Preview Canvas */}

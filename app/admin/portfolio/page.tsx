@@ -1,7 +1,9 @@
-import { defaults } from '@/lib/localData'
+import { getPortfolioItems } from '@/app/actions/portfolio'
 import PortfolioManager from './PortfolioManager'
 
-export default function AdminPortfolioPage() {
+export default async function AdminPortfolioPage() {
+    const items = await getPortfolioItems()
+
     return (
         <div className="space-y-6 h-full">
             <header>
@@ -9,7 +11,7 @@ export default function AdminPortfolioPage() {
                 <p className="text-white/40">Dijital sanat galerinizi buradan yönetin.</p>
             </header>
 
-            <PortfolioManager initialItems={defaults.portfolio as any} />
+            <PortfolioManager initialItems={items as any} />
         </div>
     )
 }
