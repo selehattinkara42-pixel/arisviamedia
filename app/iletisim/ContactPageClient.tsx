@@ -52,10 +52,12 @@ export default function ContactPageClient({ content }: { content: ContactContent
         setIsSubmitting(false)
     }
 
-    // Helper to get text size class
-    const getSize = (size?: string, defaultSize = 'text-base') => {
-        if (!size) return defaultSize
-        return size.startsWith('text-') ? size : `text-${size}`
+    // Helper to get text size class responsive
+    const getSize = (size?: string, defaultSize = 'text-7xl') => {
+        const mobileClass = "text-[clamp(2rem,6vw,4rem)] leading-none"
+        if (!size) return `${mobileClass} md:${defaultSize}`
+        const desktopClass = size.startsWith('text-') ? size : `text-${size}`
+        return `${mobileClass} md:${desktopClass}`
     }
 
     // Format cleaner for tel: link (remove non-digits)
@@ -73,7 +75,7 @@ export default function ContactPageClient({ content }: { content: ContactContent
                     <motion.h1
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className={`hero-title mb-6 break-words leading-tight ${getSize(content.title?.fontSize, 'text-3xl sm:text-4xl md:text-5xl lg:text-7xl')}`}
+                        className={`hero-title mb-6 font-bold ${getSize(content.title?.fontSize, 'text-7xl')}`}
                     >
                         {content.title?.content ? (
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-gold to-white italic font-display">

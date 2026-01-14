@@ -24,10 +24,15 @@ export default function HeroSectionClient({ content, initialCards }: { content: 
 
     const visibleCards = initialCards.slice(0, 5)
 
-    // Helper to get font size class
-    const getSize = (size?: string, defaultSize = 'text-base') => {
-        if (!size) return defaultSize
-        return size.startsWith('text-') ? size : `text-${size}`
+    // Helper to get text size class responsive
+    const getSize = (size?: string, defaultSize = 'text-7xl') => {
+        // Mobile fixed safe size (fluid typography)
+        const mobileClass = "text-[clamp(2rem,8vw,3.5rem)] leading-none"
+
+        if (!size) return `${mobileClass} md:${defaultSize}`
+
+        const desktopClass = size.startsWith('text-') ? size : `text-${size}`
+        return `${mobileClass} md:${desktopClass}`
     }
 
     return (
@@ -45,12 +50,12 @@ export default function HeroSectionClient({ content, initialCards }: { content: 
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.1 }}
-                            className={`text-primary-gold font-display font-bold tracking-[0.2em] uppercase mb-4 text-glow ${getSize(content.titleSmall?.fontSize, 'text-[10px] sm:text-xs')}`}
+                            className={`text-primary-gold font-display font-bold tracking-[0.2em] uppercase mb-4 text-glow text-[10px] sm:text-xs`}
                         >
                             {content.titleSmall?.content || 'Mükemmelliğin Ötesinde'} <span className="text-white/20">|</span> 2026
                         </motion.h2>
 
-                        <h1 className={`hero-title mb-6 md:mb-8 break-words leading-none ${getSize(content.titleLarge?.fontSize, 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl')}`}>
+                        <h1 className={`hero-title mb-6 md:mb-8 font-bold ${getSize(content.titleLarge?.fontSize, 'text-7xl')}`}>
                             {content.titleLarge?.content ? (
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-gold via-white to-primary-bronze italic inline-block w-full">
                                     <span dangerouslySetInnerHTML={{ __html: content.titleLarge.content.replace(/\n/g, '<br/>') }} />
