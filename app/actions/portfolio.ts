@@ -29,6 +29,23 @@ export async function getPortfolioItems() {
     }
 }
 
+export async function getPublicPortfolio() {
+    if (!prisma) {
+        return []
+    }
+
+    try {
+        const items = await prisma.portfolio.findMany({
+            where: { isVisible: true },
+            orderBy: { order: 'asc' }
+        })
+        return items
+    } catch (error) {
+        console.error("Failed to fetch public portfolio:", error)
+        return []
+    }
+}
+
 export async function createPortfolioItem(data: PortfolioData) {
     if (!prisma) {
         return { success: false, error: "Veritabanı bağlantısı yok. Lütfen DATABASE_URL ayarını kontrol edin." }
@@ -50,9 +67,9 @@ export async function createPortfolioItem(data: PortfolioData) {
         revalidatePath('/portfolyo')
         revalidatePath('/')
         return { success: true, data: newItem }
-    } catch (error) {
+    } catch (error: any) {
         console.error("Failed to create portfolio item:", error)
-        return { success: false, error: "Proje oluşturulamadı. Veritabanı hatası." }
+        return { success: false, error: `Proje oluşturulamadı: ${error.message || 'Bilinmeyen veritabanı hatası'}` }
     }
 }
 
@@ -70,9 +87,9 @@ export async function updatePortfolioItem(id: number, data: Partial<PortfolioDat
         revalidatePath('/portfolyo')
         revalidatePath('/')
         return { success: true, data: updatedItem }
-    } catch (error) {
+    } catch (error: any) {
         console.error("Failed to update portfolio item:", error)
-        return { success: false, error: "Proje güncellenemedi. Veritabanı hatası." }
+        return { success: false, error: `Proje güncellenemedi: ${error.message}` }
     }
 }
 
@@ -89,8 +106,8 @@ export async function deletePortfolioItem(id: number) {
         revalidatePath('/portfolyo')
         revalidatePath('/')
         return { success: true }
-    } catch (error) {
+    } catch (error: any) {
         console.error("Failed to delete portfolio item:", error)
-        return { success: false, error: "Proje silinemedi. Veritabanı hatası." }
+        return { success: false, error: `Proje silinemedi: ${error.message}` }
     }
 }

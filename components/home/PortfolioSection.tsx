@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ExternalLink, X, Play } from 'lucide-react'
 import Link from 'next/link'
 import VideoPlayer from '@/components/ui/VideoPlayer'
-import OptimizedImage from '@/components/ui/OptimizedImage'
 
 type PortfolioItem = {
     id: number
@@ -61,12 +60,10 @@ export default function PortfolioSection({ items, showAll = false }: { items: Po
                                     {item.coverUrl ? (
                                         // Case 1: Cover Image Exists (Best for Performance)
                                         <div className="w-full h-full relative group-hover:scale-110 transition-transform duration-700">
-                                            <OptimizedImage
+                                            <img
                                                 src={item.coverUrl}
                                                 alt={item.title}
-                                                fill
-                                                className="opacity-80 group-hover:opacity-100 transition-opacity duration-500"
-                                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                                className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500"
                                             />
                                             {isItemVideo && (
                                                 <div className="absolute top-4 left-4 z-10 w-8 h-8 rounded-full bg-white/10 backdrop-blur flex items-center justify-center">
@@ -97,12 +94,10 @@ export default function PortfolioSection({ items, showAll = false }: { items: Po
                                         // Case 3: Just Image
                                         <div className="w-full h-full relative group-hover:scale-110 transition-transform duration-700">
                                             {item.mediaUrl && (
-                                                <OptimizedImage
+                                                <img
                                                     src={item.mediaUrl}
                                                     alt={item.title}
-                                                    fill
-                                                    className="opacity-80 group-hover:opacity-100 transition-opacity duration-500"
-                                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                                    className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500"
                                                 />
                                             )}
                                         </div>
@@ -177,22 +172,19 @@ export default function PortfolioSection({ items, showAll = false }: { items: Po
                                             <>
                                                 {/* Main Image */}
                                                 <div className="relative w-full h-full z-10">
-                                                    <OptimizedImage
+                                                    <img
                                                         src={selectedItem.mediaUrl}
                                                         alt={selectedItem.title}
-                                                        fill
-                                                        className="object-contain"
-                                                        priority
+                                                        className="absolute inset-0 w-full h-full object-contain"
                                                     />
                                                 </div>
 
                                                 {/* Blurred Background for ambiance */}
                                                 <div className="absolute inset-0 z-0 opacity-30 blur-3xl scale-110">
-                                                    <OptimizedImage
+                                                    <img
                                                         src={selectedItem.mediaUrl}
                                                         alt={selectedItem.title}
-                                                        fill
-                                                        className="object-cover"
+                                                        className="absolute inset-0 w-full h-full object-cover"
                                                     />
                                                 </div>
                                             </>

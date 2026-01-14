@@ -143,7 +143,7 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
                     showMessage('success', 'Proje başarıyla oluşturuldu!')
                     closeModal()
                 } else {
-                    showMessage('error', 'Proje oluşturulamadı.')
+                    showMessage('error', result.error || 'Proje oluşturulamadı.')
                 }
             } else if (isEditing) {
                 // Update existing
@@ -162,12 +162,13 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
                     showMessage('success', 'Proje başarıyla güncellendi!')
                     closeModal()
                 } else {
-                    showMessage('error', 'Proje güncellenemedi.')
+                    showMessage('error', result.error || 'Proje güncellenemedi.')
                 }
             }
         } catch (error) {
             console.error(error)
-            showMessage('error', 'Bir hata oluştu.')
+            const errorMessage = error instanceof Error ? error.message : 'Bir hata oluştu.'
+            showMessage('error', errorMessage)
         }
 
         setIsLoading(false)
