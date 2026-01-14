@@ -6,7 +6,7 @@ export default async function PortfolioPage() {
 
     return (
         <div className="pt-32 pb-20 bg-background min-h-screen">
-            <div className="container mx-auto px-6 mb-20">
+            <div className="container mx-auto px-6 mb-12">
                 <h1 className="hero-title text-5xl md:text-8xl mb-8">
                     SEÇKİN <br />
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-gold to-white italic font-display">İŞLERİMİZ</span>
@@ -16,8 +16,7 @@ export default async function PortfolioPage() {
                 </p>
             </div>
 
-            {/* Reuse the Portfolio Section component but maybe passing all items or a paginated list later */}
-            <PortfolioSection items={items} />
+            <PortfolioSection items={items} showAll={true} />
         </div>
     )
 }

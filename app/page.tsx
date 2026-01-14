@@ -4,17 +4,25 @@ import ServicesSection from '@/components/home/ServicesSection'
 import PortfolioSection from '@/components/home/PortfolioSection'
 import TestimonialsSection from '@/components/home/TestimonialsSection'
 import PackagesSection from '@/components/home/PackagesSection'
-import { defaults } from '@/lib/localData'
+import { getPortfolioItems } from '@/app/actions/portfolio'
+import { getPackages } from '@/app/actions/packages'
+import { getTestimonials } from '@/app/actions/testimonials'
 
-export default function Home() {
-  // Use default data - components will load from localStorage on client
+export default async function Home() {
+  // Fetch data from database
+  const [portfolioItems, packages, testimonials] = await Promise.all([
+    getPortfolioItems(),
+    getPackages(),
+    getTestimonials()
+  ])
+
   return (
     <main className="relative z-10 min-h-screen">
       <HeroSection />
       <ServicesSection />
-      <PortfolioSection items={defaults.portfolio as any} />
-      <TestimonialsSection items={defaults.testimonials as any} />
-      <PackagesSection items={defaults.packages as any} />
+      <PortfolioSection items={portfolioItems} />
+      <TestimonialsSection items={testimonials} />
+      <PackagesSection items={packages} />
 
       {/* Contact CTA */}
       <section className="py-32 relative bg-gradient-to-t from-primary-gold/10 to-transparent">
