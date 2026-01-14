@@ -1,9 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Save, Globe, Code, Image as ImageIcon, Loader2, Check, AlertCircle, Lock } from 'lucide-react'
-import FileUpload from '@/components/ui/FileUpload'
+import { Save, Globe, Code, Image as ImageIcon, Loader2, Check, AlertCircle, Lock, Upload, X } from 'lucide-react'
 import { updateSiteSettings } from '@/app/actions/settings'
 import { changePassword } from '@/app/actions/auth'
 
@@ -27,6 +26,7 @@ export default function SettingsForm({ initialSettings }: { initialSettings?: Pa
     const [formData, setFormData] = useState<Settings>({ ...defaultSettings, ...initialSettings })
     const [isLoading, setIsLoading] = useState(false)
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+    const faviconInputRef = useRef<HTMLInputElement>(null)
 
     // Password change state
     const [passData, setPassData] = useState({ current: '', new: '', confirm: '' })
@@ -35,6 +35,36 @@ export default function SettingsForm({ initialSettings }: { initialSettings?: Pa
     const showMessage = (type: 'success' | 'error', text: string) => {
         setMessage({ type, text })
         setTimeout(() => setMessage(null), 4000)
+    }
+
+    // Favicon dosyasını Base64'e çevir
+    const handleFaviconChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        // Max 500KB kontrol
+        if (file.size > 500 * 1024) {
+            showMessage('error', 'Favicon dosyası 500KB\'dan küçük olmalı.')
+            return
+        }
+
+        const reader = new FileReader()
+        reader.onloadend = () => {
+            const base64 = reader.result as string
+            setFormData({ ...formData, favicon: base64 })
+            showMessage('success', 'Favicon yüklendi! Kaydetmeyi unutmayın.')
+        }
+        reader.onerror = () => {
+            showMessage('error', 'Dosya okunamadı.')
+        }
+        reader.readAsDataURL(file)
+    }
+
+    const clearFavicon = () => {
+        setFormData({ ...formData, favicon: '' })
+        if (faviconInputRef.current) {
+            faviconInputRef.current.value = ''
+        }
     }
 
     const handleSave = async () => {
@@ -50,7 +80,7 @@ export default function SettingsForm({ initialSettings }: { initialSettings?: Pa
             })
 
             if (result.success) {
-                showMessage('success', 'Ayarlar başarıyla kaydedildi!')
+                showMessage('success', 'Ayarlar başarıyla kaydedildi! Sayfa yenilendikten sonra favicon görünecek.')
             } else {
                 showMessage('error', 'Ayarlar kaydedilemedi.')
             }
@@ -138,30 +168,59 @@ export default function SettingsForm({ initialSettings }: { initialSettings?: Pa
                         </div>
                     </motion.div>
 
+                    {/* FAVICON - Yeni Base64 Sistemi */}
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-panel p-8">
                         <div className="flex items-center gap-3 mb-6">
                             <ImageIcon className="text-accent-cyan" />
-                            <h3 className="font-display font-bold text-xl text-white">Varlıklar (Assets)</h3>
+                            <h3 className="font-display font-bold text-xl text-white">Favicon</h3>
                         </div>
 
-                        <div className="space-y-6">
-                            <FileUpload
-                                label="Favicon"
-                                folder="logos"
-                                accept="image/*,.ico"
-                                maxSize={5}
-                                currentUrl={formData.favicon || undefined}
-                                onUpload={(url) => setFormData({ ...formData, favicon: url })}
-                            />
+                        <div className="space-y-4">
+                            {/* Mevcut Favicon Önizleme */}
+                            {formData.favicon && (
+                                <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                                    <img
+                                        src={formData.favicon}
+                                        alt="Favicon"
+                                        className="w-12 h-12 object-contain rounded bg-white/10 p-1"
+                                    />
+                                    <div className="flex-1">
+                                        <p className="text-sm text-white font-bold">Mevcut Favicon</p>
+                                        <p className="text-xs text-white/40">Kaydet butonuna basmayı unutmayın!</p>
+                                    </div>
+                                    <button
+                                        onClick={clearFavicon}
+                                        className="p-2 hover:bg-red-500/20 rounded-lg text-red-400 transition-colors"
+                                        title="Kaldır"
+                                    >
+                                        <X size={18} />
+                                    </button>
+                                </div>
+                            )}
 
-                            <FileUpload
-                                label="Site Logosu"
-                                folder="logos"
-                                accept="image/*"
-                                maxSize={10}
-                                currentUrl={formData.logoUrl || undefined}
-                                onUpload={(url) => setFormData({ ...formData, logoUrl: url })}
-                            />
+                            {/* Dosya Seçici */}
+                            <div className="relative">
+                                <input
+                                    ref={faviconInputRef}
+                                    type="file"
+                                    accept="image/png,image/x-icon,image/ico,image/jpeg,image/svg+xml,.ico"
+                                    onChange={handleFaviconChange}
+                                    className="hidden"
+                                    id="favicon-input"
+                                />
+                                <label
+                                    htmlFor="favicon-input"
+                                    className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-xl cursor-pointer hover:border-primary-gold/50 hover:bg-white/5 transition-all"
+                                >
+                                    <Upload size={24} className="text-white/40 mb-2" />
+                                    <span className="text-sm text-white/60">Favicon dosyası seçin</span>
+                                    <span className="text-xs text-white/30 mt-1">.ico, .png, .svg (max 500KB)</span>
+                                </label>
+                            </div>
+
+                            <p className="text-xs text-white/30">
+                                💡 İpucu: 32x32 veya 64x64 piksel boyutunda bir .ico veya .png dosyası kullanın.
+                            </p>
                         </div>
                     </motion.div>
                 </div>
