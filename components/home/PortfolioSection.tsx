@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ExternalLink, X, Play } from 'lucide-react'
 import Link from 'next/link'
 import VideoPlayer from '@/components/ui/VideoPlayer'
+import OptimizedImage from '@/components/ui/OptimizedImage'
 
 type PortfolioItem = {
     id: number
@@ -76,18 +77,21 @@ export default function PortfolioSection({ items, showAll = false }: { items: Po
                                             </div>
                                         </div>
                                     ) : (
-                                        <div
-                                            className="absolute inset-0 bg-gradient-to-br from-primary-gold/20 to-primary-bronze/10 transition-transform duration-500 group-hover:scale-110 opacity-80 group-hover:opacity-100"
-                                            style={{
-                                                backgroundImage: item.mediaUrl ? `url(${item.mediaUrl})` : undefined,
-                                                backgroundSize: 'cover',
-                                                backgroundPosition: 'center'
-                                            }}
-                                        />
+                                        <div className="w-full h-full relative group-hover:scale-110 transition-transform duration-700">
+                                            {item.mediaUrl && (
+                                                <OptimizedImage
+                                                    src={item.mediaUrl}
+                                                    alt={item.title}
+                                                    fill
+                                                    className="opacity-80 group-hover:opacity-100 transition-opacity duration-500"
+                                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                                />
+                                            )}
+                                        </div>
                                     )}
 
                                     {/* Gradient Overlay */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none" />
 
                                     {/* Content */}
                                     <div className="absolute inset-0 p-6 flex flex-col justify-end">
@@ -139,7 +143,7 @@ export default function PortfolioSection({ items, showAll = false }: { items: Po
                             </button>
 
                             {/* Image/Video Side */}
-                            <div className="w-full md:w-[60%] bg-black relative flex items-center justify-center bg-grid-pattern">
+                            <div className="w-full md:w-[60%] bg-black relative flex items-center justify-center bg-grid-pattern overflow-hidden">
                                 {isVideo(selectedItem.mediaUrl) ? (
                                     <div className="w-full aspect-video">
                                         <VideoPlayer
@@ -150,21 +154,30 @@ export default function PortfolioSection({ items, showAll = false }: { items: Po
                                     </div>
                                 ) : (
                                     <div className="w-full h-full min-h-[300px] md:min-h-[500px] relative">
-                                        <div
-                                            className="absolute inset-0 bg-contain bg-no-repeat bg-center"
-                                            style={{
-                                                backgroundImage: selectedItem.mediaUrl ? `url(${selectedItem.mediaUrl})` : undefined,
-                                            }}
-                                        />
-                                        {/* Background Blur Effect */}
-                                        <div
-                                            className="absolute inset-0 blur-3xl opacity-30 -z-10"
-                                            style={{
-                                                backgroundImage: selectedItem.mediaUrl ? `url(${selectedItem.mediaUrl})` : undefined,
-                                                backgroundSize: 'cover',
-                                                backgroundPosition: 'center'
-                                            }}
-                                        />
+                                        {selectedItem.mediaUrl && (
+                                            <>
+                                                {/* Main Image */}
+                                                <div className="relative w-full h-full z-10">
+                                                    <OptimizedImage
+                                                        src={selectedItem.mediaUrl}
+                                                        alt={selectedItem.title}
+                                                        fill
+                                                        className="object-contain"
+                                                        priority
+                                                    />
+                                                </div>
+
+                                                {/* Blurred Background for ambiance */}
+                                                <div className="absolute inset-0 z-0 opacity-30 blur-3xl scale-110">
+                                                    <OptimizedImage
+                                                        src={selectedItem.mediaUrl}
+                                                        alt={selectedItem.title}
+                                                        fill
+                                                        className="object-cover"
+                                                    />
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 )}
                             </div>
