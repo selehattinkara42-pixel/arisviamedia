@@ -1,3 +1,4 @@
+
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { NextResponse } from 'next/server';
 
@@ -10,8 +11,17 @@ export async function POST(request: Request): Promise<NextResponse> {
             request,
             onBeforeGenerateToken: async (pathname, clientPayload) => {
                 return {
-                    allowedContentTypes: ['image/jpeg', 'image/png', 'image/gif', 'video/mp4', 'image/webp'],
-                    addRandomSuffix: true, // <--- İşte sihirli değnek bu!
+                    allowedContentTypes: [
+                        'image/jpeg',
+                        'image/png',
+                        'image/gif',
+                        'video/mp4',
+                        'image/webp',
+                        'image/x-icon',            // .ico desteği
+                        'image/vnd.microsoft.icon', // .ico alternatifi
+                        'image/svg+xml'            // .svg desteği
+                    ],
+                    addRandomSuffix: true,
                     tokenPayload: JSON.stringify({
                         // optional, sent to your server on upload completion
                     }),
