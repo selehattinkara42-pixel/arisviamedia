@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Eye, EyeOff, GripVertical } from 'lucide-react'
+import { Eye, EyeOff, GripVertical, ChevronUp, ChevronDown } from 'lucide-react'
 import { toggleSection, updateSectionOrder } from '@/app/actions/sections'
 
 type Section = {
@@ -22,8 +22,25 @@ export default function LayoutManager({ initialSections }: { initialSections: Se
         await toggleSection(id, newStatus)
     }
 
-    // Simple drag logic placeholder - for now just buttons to move up/down could suffice or simple list
-    // Implementing full DnD might require dnd-kit, sticking to simple list for "finest detail" control first.
+    const handleMove = async (index: number, direction: 'up' | 'down') => {
+        const newSections = [...sections]
+        const targetIndex = direction === 'up' ? index - 1 : index + 1
+
+        if (targetIndex < 0 || targetIndex >= newSections.length) return
+
+        // Swap
+        const temp = newSections[index]
+        newSections[index] = newSections[targetIndex]
+        newSections[targetIndex] = temp
+
+        // Update orders locally
+        const updatedWithOrder = newSections.map((s, i) => ({ ...s, order: i }))
+
+        setSections(updatedWithOrder)
+
+        // Persist to DB
+        await updateSectionOrder(updatedWithOrder.map(s => ({ id: s.id, order: s.order })))
+    }
 
     return (
         <div className="grid lg:grid-cols-2 gap-8">
@@ -37,11 +54,26 @@ export default function LayoutManager({ initialSections }: { initialSections: Se
                             className={`flex items-center justify-between p-4 rounded-xl border ${section.isVisible ? 'bg-white/5 border-white/10' : 'bg-black/20 border-white/5 opacity-50'}`}
                         >
                             <div className="flex items-center gap-4">
-                                <div className="text-white/20 cursor-grab active:cursor-grabbing">
-                                    <GripVertical size={16} />
+                                <div className="flex flex-col gap-1">
+                                    <button
+                                        disabled={index === 0}
+                                        onClick={() => handleMove(index, 'up')}
+                                        className="text-white/20 hover:text-primary-gold disabled:opacity-30 disabled:hover:text-white/20 transition-colors"
+                                    >
+                                        <ChevronUp size={14} />
+                                    </button>
+                                    <button
+                                        disabled={index === sections.length - 1}
+                                        onClick={() => handleMove(index, 'down')}
+                                        className="text-white/20 hover:text-primary-gold disabled:opacity-30 disabled:hover:text-white/20 transition-colors"
+                                    >
+                                        <ChevronDown size={14} />
+                                    </button>
                                 </div>
-                                <span className="font-bold text-white text-sm">{section.name}</span>
-                                <span className="text-[10px] uppercase tracking-widest text-white/30 font-mono">#{section.id}</span>
+                                <div>
+                                    <p className="font-bold text-white text-sm">{section.name}</p>
+                                    <p className="text-[10px] uppercase tracking-widest text-white/30 font-mono">#{section.id}</p>
+                                </div>
                             </div>
 
                             <button
@@ -54,7 +86,7 @@ export default function LayoutManager({ initialSections }: { initialSections: Se
                         </motion.div>
                     ))}
                 </div>
-                <p className="mt-4 text-xs text-white/30">* Sürükle-bırak sıralama özelliği yakında aktif olacak.</p>
+                <p className="mt-4 text-xs text-white/30">* Bölümleri yukarı/aşağı oklarla sıralayabilirsiniz.</p>
             </div>
 
             <div className="glass-panel p-8 flex flex-col justify-center items-center text-center">
