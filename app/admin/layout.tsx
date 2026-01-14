@@ -4,7 +4,8 @@ export const metadata = {
 }
 
 import Link from 'next/link'
-import { LayoutDashboard, Image, Package, Settings, MousePointer2, MessageSquare, Quote, Layers, Sparkles, Building2 } from 'lucide-react'
+import { LayoutDashboard, Image, Package, Settings, MousePointer2, MessageSquare, Quote, Layers, Sparkles, Building2, LogOut } from 'lucide-react'
+import { logout } from '@/app/actions/auth'
 
 export default function AdminLayout({
     children,
@@ -44,7 +45,8 @@ export default function AdminLayout({
                     ))}
                 </nav>
 
-                <div className="pt-6 border-t border-white/5">
+                <div className="pt-6 border-t border-white/5 space-y-4">
+                    {/* User Info */}
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-gold to-primary-bronze"></div>
                         <div>
@@ -52,6 +54,14 @@ export default function AdminLayout({
                             <p className="text-[10px] text-white/40">Owner</p>
                         </div>
                     </div>
+
+                    {/* Logout Button */}
+                    <form action={logout}>
+                        <button className="w-full text-left px-4 py-2 rounded-xl hover:bg-red-500/10 text-red-400/60 hover:text-red-400 transition-all text-xs font-bold uppercase tracking-wider flex items-center gap-3">
+                            <LogOut size={16} />
+                            Çıkış Yap
+                        </button>
+                    </form>
                 </div>
             </aside>
 

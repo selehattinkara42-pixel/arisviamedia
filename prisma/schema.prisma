@@ -16,6 +16,7 @@ model SiteSettings {
   globalCss      String?     @db.Text
   siteName       String      @default("Aris Via Media")
   contactEmail   String      @default("info@arisvia.com")
+  adminPassword  String?     // Hashed password
   updatedAt      DateTime    @updatedAt
   logoConfig     LogoConfig?
 }
