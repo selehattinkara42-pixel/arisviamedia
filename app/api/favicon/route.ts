@@ -3,6 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function GET() {
+    if (!prisma) {
+        return new NextResponse(null, { status: 500 });
+    }
+
     try {
         const settings = await prisma.siteSettings.findFirst();
 
