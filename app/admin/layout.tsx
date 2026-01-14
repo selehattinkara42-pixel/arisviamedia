@@ -4,7 +4,7 @@ export const metadata = {
 }
 
 import Link from 'next/link'
-import { LayoutDashboard, Image, Package, Settings, MousePointer2, MessageSquare, Quote, Layers, Sparkles, Building2, LogOut } from 'lucide-react'
+import { LayoutDashboard, Image, Package, Settings, MousePointer2, MessageSquare, Quote, Layers, Sparkles, Building2, LogOut, LayoutTemplate } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 
 export default function AdminLayout({
@@ -21,6 +21,7 @@ export default function AdminLayout({
         { name: 'Müşteri Yorumları', path: '/admin/testimonials', icon: <Quote size={18} /> },
         { name: 'Gelen Kutusu', path: '/admin/inbox', icon: <MessageSquare size={18} /> },
         { name: 'Sayfa Düzeni', path: '/admin/layout-manager', icon: <Layers size={18} /> },
+        { name: 'Site İçerikleri', path: '/admin/content', icon: <LayoutTemplate size={18} /> },
         { name: 'Logo Ayarları', path: '/admin/logo', icon: <MousePointer2 size={18} /> },
         { name: 'Site Ayarları', path: '/admin/settings', icon: <Settings size={18} /> },
     ]

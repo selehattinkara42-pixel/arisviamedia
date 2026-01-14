@@ -88,11 +88,23 @@ model SectionConfig {
   updatedAt DateTime @updatedAt
 }
 
+// Eski basit model yerine yenisi PageContent kullanilacak
 model DynamicContent {
   id        String   @id @default(cuid())
   key       String   @unique
   value     String   @db.Text
   updatedAt DateTime @updatedAt
+}
+
+model PageContent {
+  id          Int      @id @default(autoincrement())
+  key         String   @unique // kod icinde kullanilacak ID (orn: home_hero_title)
+  content     String   @db.Text
+  fontSize    String   @default("base") // sm, base, lg, xl, 2xl, 3xl...
+  page        String   // Gruplama icin: home, services, contact, global
+  section     String   // Alt gruplama: hero, about, features
+  label       String   // Admin panelde görünecek isim: "Anasayfa Büyük Başlık"
+  updatedAt   DateTime @updatedAt
 }
 
 model HeroCard {
