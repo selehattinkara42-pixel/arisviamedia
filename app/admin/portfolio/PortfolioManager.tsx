@@ -55,20 +55,21 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
         setIsGeneratingThumbnail(true)
         try {
             const video = document.createElement('video')
+            // Try with crossOrigin anonymous first (works for most configured buckets)
             video.crossOrigin = 'anonymous'
             video.src = videoUrl
             video.currentTime = 1 // 1. saniyeden kare al
             video.muted = true
             video.preload = 'metadata'
+            video.playsInline = true
 
+            // Wait for data
             await new Promise((resolve, reject) => {
                 video.onloadeddata = () => resolve(true)
-                video.onerror = reject
-                // Timeout to prevent hanging
-                setTimeout(() => reject(new Error("Video load timeout")), 10000)
+                video.onerror = (e) => reject(e)
+                setTimeout(() => reject(new Error("Video load timeout")), 15000)
             })
 
-            // Seek to 1s if not already there (sometimes loadeddata fires before seek completes)
             if (video.currentTime < 0.1) {
                 video.currentTime = 1
                 await new Promise(r => { video.onseeked = r })
@@ -78,9 +79,12 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
             canvas.width = video.videoWidth
             canvas.height = video.videoHeight
             const ctx = canvas.getContext('2d')
-            ctx?.drawImage(video, 0, 0, canvas.width, canvas.height)
 
-            const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.7))
+            if (!ctx) throw new Error("Canvas context failed")
+
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+            const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8))
 
             if (blob) {
                 const file = new File([blob], 'thumbnail.jpg', { type: 'image/jpeg' })
@@ -92,11 +96,13 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
 
                 setFormData(prev => ({ ...prev, coverUrl: newBlob.url }))
                 showMessage('success', 'Otomatik kapak görseli oluşturuldu!')
+            } else {
+                throw new Error("Blob creation failed")
             }
 
         } catch (error) {
             console.error("Thumbnail generation failed:", error)
-            // Hata olsa bile devam et, kullanıcı manuel yükleyebilir
+            showMessage('error', 'Otomatik kapak oluşturulamadı. Lütfen manuel yükleyin.')
         } finally {
             setIsGeneratingThumbnail(false)
         }
@@ -107,7 +113,8 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
 
         // Eğer videosu yüklenmişse ve henüz cover yoksa otomatik oluştur
         if (isVideo(url) && !formData.coverUrl) {
-            generateVideoThumbnail(url)
+            // Wait a bit for the unexpected response issue (race condition with upload finish)
+            setTimeout(() => generateVideoThumbnail(url), 1000)
         }
     }
 
@@ -328,9 +335,8 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
                                         onUpload={(url) => setFormData({ ...formData, coverUrl: url })}
                                     />
                                     <p className="text-[10px] text-white/40 mt-2">
-                                        * Videoların hızlı yüklenmesi için kapak görseli önerilir.<br />
-                                        * Video yüklediğinizde otomatik oluşturulmaya çalışılır.<br />
-                                        * Önerilen boyut: 1920x1080px (16:9)
+                                        * Kapak oluşturma otomatik çalışmazsa manuel yükleyiniz.<br />
+                                        * Video donuyorsa boyutu çok büyüktür (önerilen max: 20-30MB).
                                     </p>
                                 </div>
                             )}
