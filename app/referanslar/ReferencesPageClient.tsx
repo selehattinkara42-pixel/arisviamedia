@@ -56,10 +56,9 @@ export default function ReferencesPageClient({ items }: { items: ReferenceItem[]
                                     initial={{ opacity: 0, scale: 0.9 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     transition={{ delay: index * 0.05 }}
-                                    whileHover={{ y: -10 }}
                                     className="group"
                                 >
-                                    <div className="relative glass-panel p-6 flex flex-col items-center text-center h-full border border-transparent hover:border-primary-gold/30 transition-all">
+                                    <div className="relative glass-panel p-6 flex flex-col items-center text-center h-full border border-transparent transition-all">
                                         {/* Logo */}
                                         <div className="w-24 h-24 rounded-2xl bg-white/5 flex items-center justify-center overflow-hidden mb-4 group-hover:bg-white/10 transition-colors">
                                             {item.logoUrl ? (
@@ -91,8 +90,6 @@ export default function ReferencesPageClient({ items }: { items: ReferenceItem[]
                                             </a>
                                         )}
 
-                                        {/* Glow effect on hover */}
-                                        <div className="absolute inset-0 rounded-2xl bg-primary-gold/5 opacity-0 group-hover:opacity-100 transition-opacity -z-10 blur-xl" />
                                     </div>
                                 </motion.div>
                             ))}
