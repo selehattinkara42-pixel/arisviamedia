@@ -20,7 +20,11 @@ const syne = Syne({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const settings = await prisma.siteSettings.findFirst();
+  let settings = null;
+
+  if (prisma) {
+    settings = await prisma.siteSettings.findFirst();
+  }
 
   return {
     title: settings?.seoTitle || "ARİS VİA MEDIA | Mükemmelliğin Ötesinde",
