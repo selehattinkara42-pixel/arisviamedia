@@ -26,12 +26,19 @@ export async function generateMetadata(): Promise<Metadata> {
     settings = await prisma.siteSettings.findFirst();
   }
 
+  const faviconUrl = settings?.favicon || '/favicon.ico';
+
   return {
     title: settings?.seoTitle || "ARİS VİA MEDIA | Mükemmelliğin Ötesinde",
     description: settings?.seoDescription || "Aris Via Media, estetiği teknolojiyle, lüksü inovasyonla harmanlayarak dijital deneyimler tasarlar.",
     icons: {
-      icon: settings?.favicon || '/favicon.ico',
-      apple: settings?.favicon || '/favicon.ico',
+      icon: faviconUrl,
+      shortcut: faviconUrl,
+      apple: faviconUrl,
+      other: {
+        rel: 'apple-touch-icon-precomposed',
+        url: faviconUrl,
+      },
     }
   };
 }
