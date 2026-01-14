@@ -19,6 +19,9 @@ const syne = Syne({
   display: 'swap',
 });
 
+// Cache'i engellemek için dinamik route yapıyoruz
+export const dynamic = 'force-dynamic';
+
 export async function generateMetadata(): Promise<Metadata> {
   let settings = null;
 
@@ -26,7 +29,10 @@ export async function generateMetadata(): Promise<Metadata> {
     settings = await prisma.siteSettings.findFirst();
   }
 
-  const faviconUrl = settings?.favicon || '/favicon.ico';
+  // Favicon'u her zaman API'den çek ve cache'i bozmak için timestamp ekle
+  // Timestamp build time'da değil, request time'da çalışması için Date.now()
+  const timestamp = Date.now();
+  const faviconUrl = `/api/favicon?v=${timestamp}`;
 
   return {
     title: settings?.seoTitle || "ARİS VİA MEDIA | Mükemmelliğin Ötesinde",
