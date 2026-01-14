@@ -6,16 +6,7 @@ import Link from 'next/link'
 import { Play } from 'lucide-react'
 import * as LucideIcons from 'lucide-react'
 import { PageContentData } from '@/app/actions/content'
-
-type HeroCard = {
-    id: number
-    title: string
-    description: string | null
-    icon: string
-    iconColor: string
-    order: number
-    isVisible: boolean
-}
+import { HeroCardData } from '@/app/actions/hero'
 
 type HeroContent = {
     titleSmall: PageContentData | null
@@ -24,32 +15,14 @@ type HeroContent = {
     buttonText: PageContentData | null
 }
 
-const defaultCards: HeroCard[] = [
-    { id: 1, title: "Hızlı Büyüme", description: "Dijital stratejilerle hızlı sonuçlar", icon: "Zap", iconColor: "#D4AF37", order: 0, isVisible: true },
-    { id: 2, title: "Güvenilir Mimari", description: "Ölçeklenebilir altyapı çözümleri", icon: "Shield", iconColor: "#22D3EE", order: 1, isVisible: true },
-    { id: 3, title: "Premium Sonuçlar", description: "Ölçülebilir başarı metrikleri", icon: "TrendingUp", iconColor: "#8B5CF6", order: 2, isVisible: true },
-]
-
-export default function HeroSectionClient({ content }: { content: HeroContent }) {
-    const [cards, setCards] = useState<HeroCard[]>(defaultCards)
+export default function HeroSectionClient({ content, initialCards }: { content: HeroContent, initialCards: HeroCardData[] }) {
     const [mounted, setMounted] = useState(false)
 
     useEffect(() => {
         setMounted(true)
-        try {
-            const stored = localStorage.getItem('arisvia_hero_cards')
-            if (stored) {
-                const parsed = JSON.parse(stored)
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                    setCards(parsed)
-                }
-            }
-        } catch (e) {
-            console.error('Error loading hero cards:', e)
-        }
     }, [])
 
-    const visibleCards = cards.filter(c => c.isVisible).slice(0, 5)
+    const visibleCards = initialCards.slice(0, 5)
 
     // Helper to get font size class
     const getSize = (size?: string, defaultSize = 'text-base') => {
@@ -78,11 +51,7 @@ export default function HeroSectionClient({ content }: { content: HeroContent })
 
                         <h1 className={`hero-title mb-8 ${getSize(content.titleLarge?.fontSize, 'text-6xl')}`}>
                             {content.titleLarge?.content ? (
-                                content.titleLarge.content.split(' ').map((word, i, arr) => (
-                                    i === arr.length - 1 ?
-                                        <span key={i} className="text-transparent bg-clip-text bg-gradient-to-r from-primary-gold via-white to-primary-bronze italic inline-block">{word}</span> :
-                                        word + ' '
-                                ))
+                                <span dangerouslySetInnerHTML={{ __html: content.titleLarge.content.replace(/\n/g, '<br/>') }} />
                             ) : (
                                 <>
                                     DİJİTAL <br />
@@ -119,7 +88,7 @@ export default function HeroSectionClient({ content }: { content: HeroContent })
 
                     {/* Right - Floating Cards */}
                     <div className="hidden lg:flex flex-col items-center justify-center gap-5 relative">
-                        {mounted && visibleCards.map((card, i) => (
+                        {visibleCards.map((card, i) => (
                             <GlassCard
                                 key={card.id}
                                 icon={card.icon}
@@ -155,6 +124,7 @@ function GlassCard({
     delay?: number
     offset?: number
 }) {
+    // Dynamic Icon Import handling for Lucide
     const IconComponent = (LucideIcons as any)[icon] || LucideIcons.Zap
 
     return (
@@ -174,7 +144,7 @@ function GlassCard({
             }}
             className="group relative w-72 cursor-pointer"
         >
-            {/* Glass background - Simplified */}
+            {/* Glass background */}
             <div className="relative p-5 rounded-2xl overflow-hidden
                 bg-white/[0.04] backdrop-blur-md
                 border border-white/[0.1]

@@ -1,45 +1,20 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, Reorder } from 'framer-motion'
-import { Plus, Trash2, GripVertical, Save, Eye, EyeOff, Check, AlertCircle } from 'lucide-react'
+import { Plus, Trash2, GripVertical, Save, Eye, EyeOff, Check, AlertCircle, RefreshCw } from 'lucide-react'
 import * as LucideIcons from 'lucide-react'
-import { getLocalHeroCards, setLocalHeroCards, generateId } from '@/lib/localData'
+import { HeroCardData, createHeroCard, updateHeroCard, deleteHeroCard, seedHeroCards } from '@/app/actions/hero'
 
 const availableIcons = ['Zap', 'Shield', 'TrendingUp', 'Sparkles', 'Star', 'Heart', 'Award', 'Crown', 'Diamond', 'Gem', 'Rocket', 'Target']
 const colorPresets = ['#D4AF37', '#22D3EE', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899']
 
-type HeroCard = {
-    id: number
-    title: string
-    description: string | null
-    icon: string
-    iconColor: string
-    order: number
-    isVisible: boolean
-}
-
-export default function HeroCardManager({ initialCards }: { initialCards: HeroCard[] }) {
-    const [cards, setCards] = useState<HeroCard[]>(initialCards)
+export default function HeroCardManager({ initialCards }: { initialCards: HeroCardData[] }) {
+    const [cards, setCards] = useState<HeroCardData[]>(initialCards)
     const [isAdding, setIsAdding] = useState(false)
     const [newCard, setNewCard] = useState({ title: '', description: '', icon: 'Zap', iconColor: '#D4AF37' })
     const [saving, setSaving] = useState(false)
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
-
-    // Load from localStorage on mount (client-side only)
-    useEffect(() => {
-        const localCards = getLocalHeroCards()
-        if (localCards.length > 0) {
-            setCards(localCards as HeroCard[])
-        }
-    }, [])
-
-    // Save to localStorage whenever cards change
-    useEffect(() => {
-        if (cards.length > 0) {
-            setLocalHeroCards(cards as any)
-        }
-    }, [cards])
 
     const showMessage = (type: 'success' | 'error', text: string) => {
         setMessage({ type, text })
@@ -53,37 +28,75 @@ export default function HeroCardManager({ initialCards }: { initialCards: HeroCa
         }
         setSaving(true)
 
-        const card: HeroCard = {
-            id: generateId(),
+        const result = await createHeroCard({
             title: newCard.title,
             description: newCard.description || null,
             icon: newCard.icon,
             iconColor: newCard.iconColor,
             order: cards.length,
             isVisible: true
+        })
+
+        if (result.success && result.data) {
+            setCards([...cards, result.data])
+            setNewCard({ title: '', description: '', icon: 'Zap', iconColor: '#D4AF37' })
+            setIsAdding(false)
+            showMessage('success', 'Kart başarıyla oluşturuldu!')
+        } else {
+            showMessage('error', 'Kart oluşturulamadı.')
         }
-
-        const newCards = [...cards, card]
-        setCards(newCards)
-        setNewCard({ title: '', description: '', icon: 'Zap', iconColor: '#D4AF37' })
-        setIsAdding(false)
         setSaving(false)
-        showMessage('success', 'Kart başarıyla oluşturuldu!')
     }
 
-    const handleUpdate = (id: number, data: Partial<HeroCard>) => {
+    const handleUpdate = async (id: number, data: Partial<HeroCardData>) => {
+        // Optimistic UI update
+        const originalCards = [...cards]
         setCards(cards.map(c => c.id === id ? { ...c, ...data } : c))
+
+        const result = await updateHeroCard(id, data)
+        if (!result.success) {
+            setCards(originalCards)
+            showMessage('error', 'Güncellenemedi.')
+        }
     }
 
-    const handleDelete = (id: number) => {
+    const handleDelete = async (id: number) => {
         if (!confirm('Bu kartı silmek istediğinize emin misiniz?')) return
+
+        // Optimistic UI update
+        const originalCards = [...cards]
         setCards(cards.filter(c => c.id !== id))
-        showMessage('success', 'Kart silindi.')
+
+        const result = await deleteHeroCard(id)
+        if (!result.success) {
+            setCards(originalCards)
+            showMessage('error', 'Silinemedi.')
+        } else {
+            showMessage('success', 'Kart silindi.')
+        }
     }
 
-    const handleReorder = (newOrder: HeroCard[]) => {
-        const reordered = newOrder.map((card, index) => ({ ...card, order: index }))
-        setCards(reordered)
+    const handleReorder = async (newOrder: HeroCardData[]) => {
+        setCards(newOrder)
+        // Note: Actual DB reorder logic implies updating 'order' field for all affected items.
+        // For simplicity in this interaction, we update the state first. 
+        // Ideally, we should batch update orders in the DB.
+
+        // Let's implement a simple loop for now
+        for (let i = 0; i < newOrder.length; i++) {
+            if (newOrder[i].order !== i) {
+                await updateHeroCard(newOrder[i].id, { order: i })
+            }
+        }
+    }
+
+    const handleSeed = async () => {
+        setSaving(true)
+        const res = await seedHeroCards()
+        if (res.success) {
+            location.reload()
+        }
+        setSaving(false)
     }
 
     const getIconComponent = (iconName: string) => {
@@ -100,8 +113,8 @@ export default function HeroCardManager({ initialCards }: { initialCards: HeroCa
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
                     className={`fixed top-24 right-8 z-[200] px-6 py-3 rounded-xl flex items-center gap-3 shadow-lg ${message.type === 'success'
-                            ? 'bg-green-500/20 border border-green-500/50 text-green-400'
-                            : 'bg-red-500/20 border border-red-500/50 text-red-400'
+                        ? 'bg-green-500/20 border border-green-500/50 text-green-400'
+                        : 'bg-red-500/20 border border-red-500/50 text-red-400'
                         }`}
                 >
                     {message.type === 'success' ? <Check size={18} /> : <AlertCircle size={18} />}
@@ -124,12 +137,7 @@ export default function HeroCardManager({ initialCards }: { initialCards: HeroCa
                 </button>
             </div>
 
-            {/* Info Banner */}
-            <div className="glass-card p-4 border-blue-500/30 bg-blue-500/5">
-                <p className="text-blue-400 text-sm">
-                    💡 Kartlar tarayıcınızda kaydedilir. Sayfayı yenileseniz bile veriler korunur.
-                </p>
-            </div>
+            {/* Info Banner was removed because we are using DB now */}
 
             {/* Add New Card Form */}
             {isAdding && (
@@ -174,8 +182,8 @@ export default function HeroCardManager({ initialCards }: { initialCards: HeroCa
                                             key={icon}
                                             onClick={() => setNewCard({ ...newCard, icon })}
                                             className={`p-2 rounded-lg border transition-all ${newCard.icon === icon
-                                                    ? 'border-primary-gold bg-primary-gold/20'
-                                                    : 'border-white/10 hover:border-white/30'
+                                                ? 'border-primary-gold bg-primary-gold/20'
+                                                : 'border-white/10 hover:border-white/30'
                                                 }`}
                                         >
                                             <IconComp size={20} style={{ color: newCard.iconColor }} />
@@ -192,8 +200,8 @@ export default function HeroCardManager({ initialCards }: { initialCards: HeroCa
                                         key={color}
                                         onClick={() => setNewCard({ ...newCard, iconColor: color })}
                                         className={`w-8 h-8 rounded-full border-2 transition-all ${newCard.iconColor === color
-                                                ? 'border-white scale-110'
-                                                : 'border-transparent hover:scale-105'
+                                            ? 'border-white scale-110'
+                                            : 'border-transparent hover:scale-105'
                                             }`}
                                         style={{ backgroundColor: color }}
                                     />
@@ -249,13 +257,21 @@ export default function HeroCardManager({ initialCards }: { initialCards: HeroCa
                                     <input
                                         type="text"
                                         value={card.title}
-                                        onChange={e => handleUpdate(card.id, { title: e.target.value })}
+                                        onChange={e => {
+                                            const newTitle = e.target.value;
+                                            setCards(cards.map(c => c.id === card.id ? { ...c, title: newTitle } : c));
+                                        }}
+                                        onBlur={e => handleUpdate(card.id, { title: e.target.value })}
                                         className="bg-transparent font-bold text-white focus:outline-none focus:text-primary-gold w-full"
                                     />
                                     <input
                                         type="text"
                                         value={card.description || ''}
-                                        onChange={e => handleUpdate(card.id, { description: e.target.value })}
+                                        onChange={e => {
+                                            const newDesc = e.target.value;
+                                            setCards(cards.map(c => c.id === card.id ? { ...c, description: newDesc } : c));
+                                        }}
+                                        onBlur={e => handleUpdate(card.id, { description: e.target.value })}
                                         className="bg-transparent text-sm text-white/50 focus:outline-none focus:text-white/70 w-full"
                                         placeholder="Açıklama ekle..."
                                     />
@@ -289,10 +305,11 @@ export default function HeroCardManager({ initialCards }: { initialCards: HeroCa
                 <div className="text-center py-12 text-white/40">
                     <p>Henüz kart eklenmemiş.</p>
                     <button
-                        onClick={() => setIsAdding(true)}
-                        className="mt-4 text-primary-gold hover:underline"
+                        onClick={handleSeed}
+                        className="mt-4 flex items-center justify-center gap-2 mx-auto px-4 py-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+                        disabled={saving}
                     >
-                        İlk kartı ekle →
+                        <RefreshCw size={14} /> Varsayılanları Yükle
                     </button>
                 </div>
             )}

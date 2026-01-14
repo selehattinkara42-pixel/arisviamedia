@@ -1,20 +1,27 @@
 
 import HeroSectionClient from './HeroSectionClient'
-import { getPageContent, getContentByPage } from '@/app/actions/content'
+import { getPageContent } from '@/app/actions/content'
+import { getHeroCards, seedHeroCards } from '@/app/actions/hero'
 
 // This Server Component fetches content and passes it to the Client Component
 export default async function HeroSection() {
 
-    // Fetch all content for home page in one batch (cached) to avoid waterfalls
-    // But since getPageContent is cached individually, we can also call them.
-    // Let's use individual calls for clarity, relying on React cache / unstable_cache
-
+    // Fetch text content
     const [titleSmall, titleLarge, description, buttonText] = await Promise.all([
         getPageContent('home_hero_title_small'),
         getPageContent('home_hero_title_large'),
         getPageContent('home_hero_description'),
         getPageContent('home_hero_button')
     ])
+
+    // Fetch hero cards from DB
+    let cards = await getHeroCards()
+
+    // Auto-seed if empty (first run fallback)
+    if (cards.length === 0) {
+        await seedHeroCards()
+        cards = await getHeroCards()
+    }
 
     return (
         <HeroSectionClient
@@ -24,6 +31,7 @@ export default async function HeroSection() {
                 description,
                 buttonText
             }}
+            initialCards={cards}
         />
     )
 }
