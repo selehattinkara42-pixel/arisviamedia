@@ -26,13 +26,9 @@ export default function HeroSectionClient({ content, initialCards }: { content: 
 
     // Helper to get text size class responsive
     const getSize = (size?: string, defaultSize = 'text-7xl') => {
-        // Mobile fixed safe size (fluid typography)
-        const mobileClass = "text-[clamp(2rem,8vw,3.5rem)] leading-none"
-
-        if (!size) return `${mobileClass} md:${defaultSize}`
-
+        if (!size) return `md:${defaultSize}`
         const desktopClass = size.startsWith('text-') ? size : `text-${size}`
-        return `${mobileClass} md:${desktopClass}`
+        return `md:${desktopClass}`
     }
 
     return (
@@ -55,7 +51,7 @@ export default function HeroSectionClient({ content, initialCards }: { content: 
                             {content.titleSmall?.content || 'Mükemmelliğin Ötesinde'} <span className="text-white/20">|</span> 2026
                         </motion.h2>
 
-                        <h1 className={`hero-title mb-6 md:mb-8 font-bold ${getSize(content.titleLarge?.fontSize, 'text-7xl')}`}>
+                        <h1 className={`hero-title mb-6 md:mb-8 font-bold text-4xl sm:text-5xl leading-tight ${getSize(content.titleLarge?.fontSize, 'text-7xl')}`}>
                             {content.titleLarge?.content ? (
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-gold via-white to-primary-bronze italic inline-block w-full">
                                     <span dangerouslySetInnerHTML={{ __html: content.titleLarge.content.replace(/\n/g, '<br/>') }} />
@@ -71,7 +67,7 @@ export default function HeroSectionClient({ content, initialCards }: { content: 
                             )}
                         </h1>
 
-                        <p className={`text-white/50 max-w-lg mx-auto lg:mx-0 mb-8 lg:mb-12 leading-relaxed font-body italic ${getSize(content.description?.fontSize, 'text-sm sm:text-lg')}`}>
+                        <p className={`text-white/50 max-w-lg mx-auto lg:mx-0 mb-8 lg:mb-12 leading-relaxed font-body italic text-sm sm:text-base ${getSize(content.description?.fontSize, 'text-lg')}`}>
                             {content.description?.content || 'Aris Via Media, estetiği teknolojiyle, lüksü inovasyonla harmanlayarak "kusursuzun ötesi" dijital deneyimler tasarlar.'}
                         </p>
 
@@ -80,7 +76,7 @@ export default function HeroSectionClient({ content, initialCards }: { content: 
                                 <motion.button
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
-                                    className={`btn-premium w-full sm:w-auto px-8 py-4 sm:px-12 sm:py-5 ${getSize(content.buttonText?.fontSize, 'text-base sm:text-lg')}`}
+                                    className={`btn-premium w-full sm:w-auto px-8 py-4 sm:px-12 sm:py-5 text-sm sm:text-base ${getSize(content.buttonText?.fontSize, 'text-lg')}`}
                                 >
                                     {content.buttonText?.content || 'Yolculuğa Başla'}
                                 </motion.button>

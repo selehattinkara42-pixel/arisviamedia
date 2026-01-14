@@ -11,16 +11,15 @@ export default async function PackagesPage() {
 
     // Helper to get text size class
     const getSize = (size?: string, defaultSize = 'text-8xl') => {
-        const mobileClass = "text-[clamp(2rem,6vw,4rem)] leading-none"
-        if (!size) return `${mobileClass} md:${defaultSize}`
+        if (!size) return `md:${defaultSize}`
         const desktopClass = size.startsWith('text-') ? size : `text-${size}`
-        return `${mobileClass} md:${desktopClass}`
+        return `md:${desktopClass}`
     }
 
     return (
         <div className="pt-32 pb-20 bg-background min-h-screen">
             <div className="container mx-auto px-6 mb-20">
-                <h1 className={`hero-title mb-8 font-bold ${getSize(titleLarge?.fontSize, 'text-8xl')}`}>
+                <h1 className={`hero-title mb-8 font-bold text-3xl sm:text-4xl leading-tight ${getSize(titleLarge?.fontSize, 'text-8xl')}`}>
                     {titleLarge?.content ? (
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-gold to-white italic font-display">
                             <span dangerouslySetInnerHTML={{ __html: titleLarge.content.replace(/\n/g, '<br/>') }} />
