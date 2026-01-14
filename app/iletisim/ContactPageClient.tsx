@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState } from 'react'
@@ -13,6 +14,13 @@ type ContactContent = {
     phoneTitle: PageContentData | null
     officeTitle: PageContentData | null
     formTitle: PageContentData | null
+    emailInfo: PageContentData | null
+    emailDesc: PageContentData | null
+    phoneInfo: PageContentData | null
+    phoneDesc: PageContentData | null
+    addressInfo: PageContentData | null
+    addressDesc: PageContentData | null
+    mapIframe: PageContentData | null
 }
 
 export default function ContactPageClient({ content }: { content: ContactContent }) {
@@ -48,6 +56,11 @@ export default function ContactPageClient({ content }: { content: ContactContent
     const getSize = (size?: string, defaultSize = 'text-base') => {
         if (!size) return defaultSize
         return size.startsWith('text-') ? size : `text-${size}`
+    }
+
+    // Format cleaner for tel: link (remove non-digits)
+    const getCleanPhone = (phone?: string) => {
+        return phone ? phone.replace(/\D/g, '') : ''
     }
 
     return (
@@ -86,8 +99,13 @@ export default function ContactPageClient({ content }: { content: ContactContent
                             </div>
                             <div>
                                 <h3 className="font-display font-bold text-white text-lg mb-1">{content.emailTitle?.content || 'Email'}</h3>
-                                <p className="text-white/40 mb-2 text-sm">Genel İletişim & Projeler</p>
-                                <a href="mailto:info@arisvia.com" className="text-xl text-white font-bold hover:text-primary-gold transition-colors">info@arisvia.com</a>
+                                <p className="text-white/40 mb-2 text-sm">{content.emailDesc?.content || 'Genel İletişim & Projeler'}</p>
+                                <a
+                                    href={`mailto:${content.emailInfo?.content || 'info@arisvia.com'}`}
+                                    className={`text-xl text-white font-bold hover:text-primary-gold transition-colors ${getSize(content.emailInfo?.fontSize)}`}
+                                >
+                                    {content.emailInfo?.content || 'info@arisvia.com'}
+                                </a>
                             </div>
                         </div>
 
@@ -97,8 +115,13 @@ export default function ContactPageClient({ content }: { content: ContactContent
                             </div>
                             <div>
                                 <h3 className="font-display font-bold text-white text-lg mb-1">{content.phoneTitle?.content || 'Telefon'}</h3>
-                                <p className="text-white/40 mb-2 text-sm">Hafta içi: 09:00 - 18:00</p>
-                                <a href="tel:+905551234567" className="text-xl text-white font-bold hover:text-primary-gold transition-colors">+90 (555) 123 45 67</a>
+                                <p className="text-white/40 mb-2 text-sm">{content.phoneDesc?.content || 'Hafta içi: 09:00 - 18:00'}</p>
+                                <a
+                                    href={`tel:${getCleanPhone(content.phoneInfo?.content) || '+905551234567'}`}
+                                    className={`text-xl text-white font-bold hover:text-primary-gold transition-colors ${getSize(content.phoneInfo?.fontSize)}`}
+                                >
+                                    {content.phoneInfo?.content || '+90 (555) 123 45 67'}
+                                </a>
                             </div>
                         </div>
 
@@ -108,10 +131,22 @@ export default function ContactPageClient({ content }: { content: ContactContent
                             </div>
                             <div>
                                 <h3 className="font-display font-bold text-white text-lg mb-1">{content.officeTitle?.content || 'Ofis'}</h3>
-                                <p className="text-white/40 mb-2 text-sm">Merkez Ofis</p>
-                                <p className="text-xl text-white font-bold">İstanbul, Türkiye</p>
+                                <p className="text-white/40 mb-2 text-sm">{content.addressDesc?.content || 'Merkez Ofis'}</p>
+                                <p className={`text-xl text-white font-bold ${getSize(content.addressInfo?.fontSize)}`}>
+                                    {content.addressInfo?.content || 'İstanbul, Türkiye'}
+                                </p>
                             </div>
                         </div>
+
+                        {/* Google Maps Embed */}
+                        {content.mapIframe?.content && (
+                            <div className="glass-panel p-2 overflow-hidden h-[300px] border border-white/10 group hover:border-primary-gold/30 transition-colors">
+                                <div
+                                    className="w-full h-full grayscale hover:grayscale-0 transition-all duration-500 [&>iframe]:w-full [&>iframe]:h-full"
+                                    dangerouslySetInnerHTML={{ __html: content.mapIframe.content }}
+                                />
+                            </div>
+                        )}
                     </div>
 
                     {/* Form */}

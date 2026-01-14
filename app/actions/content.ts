@@ -197,6 +197,64 @@ const DEFAULT_CONTENTS = [
         page: 'contact',
         section: 'form',
         label: 'İletişim Formu Başlığı'
+    },
+
+    // İLETİŞİM BİLGİLERİ (DATA)
+    {
+        key: 'contact_info_email',
+        content: 'info@arisvia.com',
+        fontSize: 'base',
+        page: 'contact',
+        section: 'info',
+        label: 'İletişim - E-Posta Adresi'
+    },
+    {
+        key: 'contact_info_email_desc',
+        content: 'Genel İletişim & Projeler',
+        fontSize: 'sm',
+        page: 'contact',
+        section: 'info',
+        label: 'İletişim - E-Posta Alt Açıklama'
+    },
+    {
+        key: 'contact_info_phone',
+        content: '+90 (555) 123 45 67',
+        fontSize: 'xl',
+        page: 'contact',
+        section: 'info',
+        label: 'İletişim - Telefon Numarası'
+    },
+    {
+        key: 'contact_info_phone_desc',
+        content: 'Hafta içi: 09:00 - 18:00',
+        fontSize: 'sm',
+        page: 'contact',
+        section: 'info',
+        label: 'İletişim - Telefon Alt Açıklama'
+    },
+    {
+        key: 'contact_info_address',
+        content: 'İstanbul, Türkiye',
+        fontSize: 'xl',
+        page: 'contact',
+        section: 'info',
+        label: 'İletişim - Açık Adres'
+    },
+    {
+        key: 'contact_info_address_desc',
+        content: 'Merkez Ofis',
+        fontSize: 'sm',
+        page: 'contact',
+        section: 'info',
+        label: 'İletişim - Adres Alt Açıklama'
+    },
+    {
+        key: 'contact_info_map_iframe',
+        content: '<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d192698.6004739566!2d28.871754029281352!3d41.00540866579246!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14caa7040068086b%3A0xe1ccfe98bc01b0d0!2zxLBzdGFuYnVs!5e0!3m2!1str!2str!4v1705320000000!5m2!1str!2str" width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>',
+        fontSize: 'base',
+        page: 'contact',
+        section: 'map',
+        label: 'Google Maps Iframe Kodu'
     }
 ]
 
