@@ -18,7 +18,7 @@ export default async function PackagesPage() {
     return (
         <div className="pt-32 pb-20 bg-background min-h-screen">
             <div className="container mx-auto px-6 mb-20">
-                <h1 className={`hero-title mb-8 ${getSize(titleLarge?.fontSize, 'text-5xl md:text-8xl')}`}>
+                <h1 className={`hero-title mb-8 break-words ${getSize(titleLarge?.fontSize, 'text-4xl sm:text-5xl md:text-7xl lg:text-8xl')}`}>
                     {titleLarge?.content ? (
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-gold to-white italic font-display">
                             <span dangerouslySetInnerHTML={{ __html: titleLarge.content.replace(/\n/g, '<br/>') }} />

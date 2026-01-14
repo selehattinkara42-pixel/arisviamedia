@@ -49,14 +49,15 @@ export default function HeroSectionClient({ content, initialCards }: { content: 
                             {content.titleSmall?.content || 'Mükemmelliğin Ötesinde'} <span className="text-white/20">|</span> 2026
                         </motion.h2>
 
-                        <h1 className={`hero-title mb-8 ${getSize(content.titleLarge?.fontSize, 'text-6xl')}`}>
+                        <h1 className={`hero-title mb-6 md:mb-8 break-words hyphens-auto ${getSize(content.titleLarge?.fontSize, 'text-4xl md:text-6xl lg:text-7xl')}`}>
                             {content.titleLarge?.content ? (
-                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-gold via-white to-primary-bronze italic inline-block">
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-gold via-white to-primary-bronze italic inline-block w-full">
                                     <span dangerouslySetInnerHTML={{ __html: content.titleLarge.content.replace(/\n/g, '<br/>') }} />
                                 </span>
                             ) : (
                                 <>
-                                    <span className="text-white">DİJİTAL</span> <br />
+                                    <span className="text-white block sm:inline">DİJİTAL</span>{' '}
+                                    <br className="hidden sm:block" />
                                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-gold via-white to-primary-bronze italic inline-block">
                                         SANAT
                                     </span>
