@@ -76,7 +76,7 @@ export default function Navbar() {
     return (
         <>
             <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled ? 'nav-glass py-4' : 'py-6'}`}>
-                <div className="container mx-auto px-6 flex items-center justify-between">
+                <div className="container mx-auto px-4 sm:px-6 flex items-center justify-between">
                     {/* Logo */}
                     <Link href="/" className="relative z-10 flex items-center">
                         {logoConfig.logoUrl ? (
@@ -84,10 +84,10 @@ export default function Navbar() {
                                 style={{
                                     width: logoConfig.width,
                                     height: logoConfig.height,
-                                    maxWidth: '200px',
+                                    maxWidth: '100%',
                                     maxHeight: '60px'
                                 }}
-                                className="relative"
+                                className="relative max-w-[140px] sm:max-w-[200px]"
                             >
                                 <img
                                     src={logoConfig.logoUrl}

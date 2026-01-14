@@ -31,25 +31,26 @@ export default function HeroSectionClient({ content, initialCards }: { content: 
     }
 
     return (
-        <section className="relative min-h-screen flex items-center pt-20 pb-24 overflow-hidden">
-            <div className="container mx-auto px-6 relative z-10">
-                <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <section className="relative min-h-screen flex items-center pt-32 pb-12 lg:pt-20 lg:pb-24 overflow-hidden">
+            <div className="container mx-auto px-4 sm:px-6 relative z-10">
+                <div className="flex flex-col lg:grid lg:grid-cols-2 gap-12 lg:gap-12 items-center">
                     {/* Left Content */}
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6 }}
+                        className="text-center lg:text-left w-full"
                     >
                         <motion.h2
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.1 }}
-                            className={`text-primary-gold font-display font-bold tracking-[0.3em] uppercase mb-6 text-glow ${getSize(content.titleSmall?.fontSize, 'text-xs')}`}
+                            className={`text-primary-gold font-display font-bold tracking-[0.2em] uppercase mb-4 text-glow ${getSize(content.titleSmall?.fontSize, 'text-[10px] sm:text-xs')}`}
                         >
                             {content.titleSmall?.content || 'Mükemmelliğin Ötesinde'} <span className="text-white/20">|</span> 2026
                         </motion.h2>
 
-                        <h1 className={`hero-title mb-6 md:mb-8 break-words leading-tight ${getSize(content.titleLarge?.fontSize, 'text-3xl sm:text-4xl md:text-6xl lg:text-7xl')}`}>
+                        <h1 className={`hero-title mb-6 md:mb-8 break-words leading-none ${getSize(content.titleLarge?.fontSize, 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl')}`}>
                             {content.titleLarge?.content ? (
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-gold via-white to-primary-bronze italic inline-block w-full">
                                     <span dangerouslySetInnerHTML={{ __html: content.titleLarge.content.replace(/\n/g, '<br/>') }} />
@@ -65,33 +66,34 @@ export default function HeroSectionClient({ content, initialCards }: { content: 
                             )}
                         </h1>
 
-                        <p className={`text-white/50 max-w-lg mb-12 leading-relaxed font-body italic ${getSize(content.description?.fontSize, 'text-xl')}`}>
+                        <p className={`text-white/50 max-w-lg mx-auto lg:mx-0 mb-8 lg:mb-12 leading-relaxed font-body italic ${getSize(content.description?.fontSize, 'text-sm sm:text-lg')}`}>
                             {content.description?.content || 'Aris Via Media, estetiği teknolojiyle, lüksü inovasyonla harmanlayarak "kusursuzun ötesi" dijital deneyimler tasarlar.'}
                         </p>
 
-                        <div className="flex flex-wrap items-center gap-8">
-                            <Link href="/iletisim">
+                        <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-6 mb-12 lg:mb-0">
+                            <Link href="/iletisim" className="w-full sm:w-auto">
                                 <motion.button
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
-                                    className={`btn-premium px-12 py-5 ${getSize(content.buttonText?.fontSize, 'text-lg')}`}
+                                    className={`btn-premium w-full sm:w-auto px-8 py-4 sm:px-12 sm:py-5 ${getSize(content.buttonText?.fontSize, 'text-base sm:text-lg')}`}
                                 >
                                     {content.buttonText?.content || 'Yolculuğa Başla'}
                                 </motion.button>
                             </Link>
 
                             <button className="flex items-center gap-4 group">
-                                <div className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center group-hover:border-primary-gold transition-colors duration-300">
-                                    <Play className="fill-white group-hover:fill-primary-gold ml-1 transition-colors" size={16} />
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-white/20 flex items-center justify-center group-hover:border-primary-gold transition-colors duration-300">
+                                    <Play className="fill-white group-hover:fill-primary-gold ml-1 transition-colors" size={14} />
                                 </div>
-                                <span className="text-xs font-bold uppercase tracking-widest text-white/60 group-hover:text-primary-gold transition-colors">Hikayemizi İzle</span>
+                                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-white/60 group-hover:text-primary-gold transition-colors">Hikayemizi İzle</span>
                             </button>
                         </div>
                     </motion.div>
 
-                    {/* Right - Floating Cards */}
-                    <div className="hidden lg:flex flex-col items-center justify-center gap-5 relative">
-                        {visibleCards.map((card, i) => (
+                    {/* Right - Floating Cards (Mobil için düzenlendi) */}
+                    <div className="flex flex-col gap-4 w-full relative lg:items-center lg:justify-center">
+                        {/* Mobilde sadece ilk 3 kartı göster, Desktopta 5 */}
+                        {visibleCards.slice(0, 3).map((card, i) => (
                             <GlassCard
                                 key={card.id}
                                 icon={card.icon}
@@ -99,7 +101,8 @@ export default function HeroSectionClient({ content, initialCards }: { content: 
                                 title={card.title}
                                 description={card.description || ''}
                                 delay={i}
-                                offset={i % 2 === 0 ? -30 : 30}
+                                offset={0} // Mobilde offset yok
+                                className="lg:w-72 w-full"
                             />
                         ))}
                     </div>
@@ -126,6 +129,7 @@ function GlassCard({
     description?: string
     delay?: number
     offset?: number
+    className?: string
 }) {
     // Dynamic Icon Import handling for Lucide
     const IconComponent = (LucideIcons as any)[icon] || LucideIcons.Zap
@@ -145,7 +149,7 @@ function GlassCard({
                 scale: 1.05,
                 y: -10,
             }}
-            className="group relative w-72 cursor-pointer"
+            className={`group relative cursor-pointer ${className || 'w-72'}`}
         >
             {/* Glass background */}
             <div className="relative p-5 rounded-2xl overflow-hidden
