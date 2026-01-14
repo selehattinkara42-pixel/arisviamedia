@@ -7,6 +7,7 @@ type PortfolioData = {
     title: string
     description: string
     mediaUrl: string
+    coverUrl?: string
     category: string
     order?: number
     isVisible?: boolean
@@ -39,6 +40,7 @@ export async function createPortfolioItem(data: PortfolioData) {
                 title: data.title,
                 description: data.description,
                 mediaUrl: data.mediaUrl,
+                coverUrl: data.coverUrl || null,
                 category: data.category,
                 order: data.order ?? 0,
                 isVisible: data.isVisible ?? true

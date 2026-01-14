@@ -37,6 +37,7 @@ model Portfolio {
   title       String
   description String
   mediaUrl    String
+  coverUrl    String?  // Video kapak görseli veya alternatif görsel
   category    String
   order       Int      @default(0)
   isVisible   Boolean  @default(true)

@@ -11,6 +11,7 @@ type PortfolioItem = {
     title: string
     description: string
     mediaUrl: string
+    coverUrl?: string
     category: string
     order: number
     isVisible?: boolean
@@ -40,6 +41,7 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
             title: '',
             description: '',
             mediaUrl: '',
+            coverUrl: '',
             category: 'Video Production',
             order: items.length
         })
@@ -62,6 +64,7 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
                     title: formData.title!,
                     description: formData.description || '',
                     mediaUrl: formData.mediaUrl || '',
+                    coverUrl: formData.coverUrl || undefined,
                     category: formData.category || 'Video Production',
                     order: formData.order || 0
                 })
@@ -79,6 +82,7 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
                     title: formData.title,
                     description: formData.description,
                     mediaUrl: formData.mediaUrl,
+                    coverUrl: formData.coverUrl,
                     category: formData.category,
                     order: formData.order,
                     isVisible: isEditing.isVisible
@@ -116,6 +120,10 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
         setIsEditing(null)
         setIsCreating(false)
         setFormData({})
+    }
+
+    const isVideo = (url?: string) => {
+        return /\.(mp4|webm|mov|avi|mkv)(\?|$)/i.test(url || '')
     }
 
     return (
@@ -163,8 +171,12 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
                             className="glass-panel p-0 overflow-hidden group relative"
                         >
                             <div className="h-48 bg-white/5 relative bg-black">
-                                {item.mediaUrl ? (
-                                    /\.(mp4|webm|mov|avi|mkv)(\?|$)/i.test(item.mediaUrl) ? (
+                                {item.coverUrl ? (
+                                    /* 1. Öncelik: Varsa Kapak Görselini Göster (En hızlı) */
+                                    <img src={item.coverUrl} alt={item.title} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-500" />
+                                ) : item.mediaUrl ? (
+                                    /* 2. Öncelik: Video ise Video Preview, Resim ise Resim */
+                                    isVideo(item.mediaUrl) ? (
                                         <video
                                             src={item.mediaUrl}
                                             className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-500"
@@ -236,7 +248,7 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
                         </h3>
 
                         <div className="space-y-6">
-                            {/* File Upload */}
+                            {/* File Upload (Main) */}
                             <FileUpload
                                 label="Proje Görseli / Videosu"
                                 folder="images"
@@ -245,6 +257,24 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
                                 currentUrl={formData.mediaUrl}
                                 onUpload={(url) => setFormData({ ...formData, mediaUrl: url })}
                             />
+
+                            {/* Cover Image Upload (Only if Video) */}
+                            {isVideo(formData.mediaUrl) && (
+                                <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                                    <FileUpload
+                                        label="Video Kapak Görseli (Thumbnail) (Opsiyonel)"
+                                        folder="images"
+                                        accept="image/*"
+                                        maxSize={10}
+                                        currentUrl={formData.coverUrl}
+                                        onUpload={(url) => setFormData({ ...formData, coverUrl: url })}
+                                    />
+                                    <p className="text-[10px] text-white/40 mt-2">
+                                        * Videoların hızlı yüklenmesi için kapak görseli önerilir.<br />
+                                        * Önerilen boyut: 1920x1080px (16:9)
+                                    </p>
+                                </div>
+                            )}
 
                             <div>
                                 <label className="block text-xs font-bold uppercase text-white/40 mb-2">Proje Başlığı *</label>

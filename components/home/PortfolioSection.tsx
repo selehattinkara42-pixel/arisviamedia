@@ -13,6 +13,7 @@ type PortfolioItem = {
     description?: string
     category: string
     mediaUrl?: string | null
+    coverUrl?: string | null
 }
 
 const isVideo = (url?: string | null) => {
@@ -57,7 +58,24 @@ export default function PortfolioSection({ items, showAll = false }: { items: Po
                                     className="group relative aspect-[4/3] overflow-hidden rounded-2xl cursor-pointer bg-zinc-900 border border-white/5"
                                 >
                                     {/* Media Layer */}
-                                    {isItemVideo ? (
+                                    {item.coverUrl ? (
+                                        // Case 1: Cover Image Exists (Best for Performance)
+                                        <div className="w-full h-full relative group-hover:scale-110 transition-transform duration-700">
+                                            <OptimizedImage
+                                                src={item.coverUrl}
+                                                alt={item.title}
+                                                fill
+                                                className="opacity-80 group-hover:opacity-100 transition-opacity duration-500"
+                                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                            />
+                                            {isItemVideo && (
+                                                <div className="absolute top-4 left-4 z-10 w-8 h-8 rounded-full bg-white/10 backdrop-blur flex items-center justify-center">
+                                                    <Play size={12} fill="white" className="ml-0.5" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : isItemVideo ? (
+                                        // Case 2: Video without Cover (Fallback to Video Tag)
                                         <div className="w-full h-full relative">
                                             <video
                                                 src={item.mediaUrl!}
@@ -71,12 +89,12 @@ export default function PortfolioSection({ items, showAll = false }: { items: Po
                                                     e.currentTarget.currentTime = 0
                                                 }}
                                             />
-                                            {/* Video Indicator */}
                                             <div className="absolute top-4 left-4 z-10 w-8 h-8 rounded-full bg-white/10 backdrop-blur flex items-center justify-center">
                                                 <Play size={12} fill="white" className="ml-0.5" />
                                             </div>
                                         </div>
                                     ) : (
+                                        // Case 3: Just Image
                                         <div className="w-full h-full relative group-hover:scale-110 transition-transform duration-700">
                                             {item.mediaUrl && (
                                                 <OptimizedImage
@@ -148,6 +166,7 @@ export default function PortfolioSection({ items, showAll = false }: { items: Po
                                     <div className="w-full aspect-video">
                                         <VideoPlayer
                                             src={selectedItem.mediaUrl!}
+                                            poster={selectedItem.coverUrl || undefined}
                                             autoPlay={true}
                                             className="w-full h-full"
                                         />
