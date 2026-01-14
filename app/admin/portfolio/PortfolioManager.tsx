@@ -2,9 +2,10 @@
 
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Trash2, Edit, Plus, Image as ImageIcon, X, Save, Check, AlertCircle } from 'lucide-react'
+import { Trash2, Edit, Plus, Image as ImageIcon, X, Save, Check, AlertCircle, Loader2 } from 'lucide-react'
 import FileUpload from '@/components/ui/FileUpload'
 import { createPortfolioItem, updatePortfolioItem, deletePortfolioItem } from '@/app/actions/portfolio'
+import { upload } from '@vercel/blob/client'
 
 type PortfolioItem = {
     id: number
@@ -23,6 +24,7 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
     const [isCreating, setIsCreating] = useState(false)
     const [formData, setFormData] = useState<Partial<PortfolioItem>>({})
     const [isLoading, setIsLoading] = useState(false)
+    const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false)
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
     const showMessage = (type: 'success' | 'error', text: string) => {
@@ -47,6 +49,66 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
         })
         setIsCreating(true)
         setIsEditing(null)
+    }
+
+    const generateVideoThumbnail = async (videoUrl: string) => {
+        setIsGeneratingThumbnail(true)
+        try {
+            const video = document.createElement('video')
+            video.crossOrigin = 'anonymous'
+            video.src = videoUrl
+            video.currentTime = 1 // 1. saniyeden kare al
+            video.muted = true
+            video.preload = 'metadata'
+
+            await new Promise((resolve, reject) => {
+                video.onloadeddata = () => resolve(true)
+                video.onerror = reject
+                // Timeout to prevent hanging
+                setTimeout(() => reject(new Error("Video load timeout")), 10000)
+            })
+
+            // Seek to 1s if not already there (sometimes loadeddata fires before seek completes)
+            if (video.currentTime < 0.1) {
+                video.currentTime = 1
+                await new Promise(r => { video.onseeked = r })
+            }
+
+            const canvas = document.createElement('canvas')
+            canvas.width = video.videoWidth
+            canvas.height = video.videoHeight
+            const ctx = canvas.getContext('2d')
+            ctx?.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+            const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.7))
+
+            if (blob) {
+                const file = new File([blob], 'thumbnail.jpg', { type: 'image/jpeg' })
+
+                const newBlob = await upload(file.name, file, {
+                    access: 'public',
+                    handleUploadUrl: '/api/upload',
+                })
+
+                setFormData(prev => ({ ...prev, coverUrl: newBlob.url }))
+                showMessage('success', 'Otomatik kapak görseli oluşturuldu!')
+            }
+
+        } catch (error) {
+            console.error("Thumbnail generation failed:", error)
+            // Hata olsa bile devam et, kullanıcı manuel yükleyebilir
+        } finally {
+            setIsGeneratingThumbnail(false)
+        }
+    }
+
+    const handleMediaUpload = (url: string) => {
+        setFormData(prev => ({ ...prev, mediaUrl: url }))
+
+        // Eğer videosu yüklenmişse ve henüz cover yoksa otomatik oluştur
+        if (isVideo(url) && !formData.coverUrl) {
+            generateVideoThumbnail(url)
+        }
     }
 
     const handleSave = async () => {
@@ -172,10 +234,8 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
                         >
                             <div className="h-48 bg-white/5 relative bg-black">
                                 {item.coverUrl ? (
-                                    /* 1. Öncelik: Varsa Kapak Görselini Göster (En hızlı) */
                                     <img src={item.coverUrl} alt={item.title} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-500" />
                                 ) : item.mediaUrl ? (
-                                    /* 2. Öncelik: Video ise Video Preview, Resim ise Resim */
                                     isVideo(item.mediaUrl) ? (
                                         <video
                                             src={item.mediaUrl}
@@ -216,16 +276,6 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
                         </motion.div>
                     ))}
                 </AnimatePresence>
-
-                {items.length === 0 && (
-                    <div className="col-span-full text-center py-16 text-white/30">
-                        <ImageIcon size={48} className="mx-auto mb-4 opacity-50" />
-                        <p>Henüz proje eklenmemiş.</p>
-                        <button onClick={handleNew} className="mt-4 text-primary-gold hover:underline">
-                            İlk projeyi ekle →
-                        </button>
-                    </div>
-                )}
             </div>
 
             {/* Editor Modal */}
@@ -255,12 +305,20 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
                                 accept="image/*,video/*"
                                 maxSize={100}
                                 currentUrl={formData.mediaUrl}
-                                onUpload={(url) => setFormData({ ...formData, mediaUrl: url })}
+                                onUpload={handleMediaUpload}
                             />
 
                             {/* Cover Image Upload (Only if Video) */}
                             {isVideo(formData.mediaUrl) && (
-                                <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                                <div className="p-4 rounded-xl bg-white/5 border border-white/10 relative overflow-hidden">
+                                    {isGeneratingThumbnail && (
+                                        <div className="absolute inset-0 z-10 bg-black/60 flex items-center justify-center backdrop-blur-sm">
+                                            <div className="flex flex-col items-center gap-2">
+                                                <Loader2 className="animate-spin text-primary-gold" />
+                                                <span className="text-xs text-white/80">Kapak oluşturuluyor...</span>
+                                            </div>
+                                        </div>
+                                    )}
                                     <FileUpload
                                         label="Video Kapak Görseli (Thumbnail) (Opsiyonel)"
                                         folder="images"
@@ -271,6 +329,7 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
                                     />
                                     <p className="text-[10px] text-white/40 mt-2">
                                         * Videoların hızlı yüklenmesi için kapak görseli önerilir.<br />
+                                        * Video yüklediğinizde otomatik oluşturulmaya çalışılır.<br />
                                         * Önerilen boyut: 1920x1080px (16:9)
                                     </p>
                                 </div>
