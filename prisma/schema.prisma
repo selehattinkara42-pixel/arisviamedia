@@ -104,3 +104,16 @@ model HeroCard {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model Reference {
+  id          Int      @id @default(autoincrement())
+  name        String   // Marka adı
+  logoUrl     String?  // Logo görseli URL
+  websiteUrl  String?  // Marka websitesi
+  description String?  // Kısa açıklama
+  category    String   @default("Marka") // Marka, Ajans, Kurum vs.
+  order       Int      @default(0)
+  isVisible   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

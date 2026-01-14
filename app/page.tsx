@@ -4,16 +4,19 @@ import ServicesSection from '@/components/home/ServicesSection'
 import PortfolioSection from '@/components/home/PortfolioSection'
 import TestimonialsSection from '@/components/home/TestimonialsSection'
 import PackagesSection from '@/components/home/PackagesSection'
+import ReferencesSection from '@/components/home/ReferencesSection'
 import { getPortfolioItems } from '@/app/actions/portfolio'
 import { getPackages } from '@/app/actions/packages'
 import { getTestimonials } from '@/app/actions/testimonials'
+import { getPublicReferences } from '@/app/actions/references'
 
 export default async function Home() {
   // Fetch data from database
-  const [portfolioItems, packages, testimonials] = await Promise.all([
+  const [portfolioItems, packages, testimonials, references] = await Promise.all([
     getPortfolioItems(),
     getPackages(),
-    getTestimonials()
+    getTestimonials(),
+    getPublicReferences()
   ])
 
   return (
@@ -21,6 +24,7 @@ export default async function Home() {
       <HeroSection />
       <ServicesSection />
       <PortfolioSection items={portfolioItems} />
+      <ReferencesSection items={references} />
       <TestimonialsSection items={testimonials} />
       <PackagesSection items={packages} />
 
@@ -45,6 +49,7 @@ export default async function Home() {
           <div className="flex justify-center gap-8 text-white/40 text-sm">
             <Link href="/hizmetler" className="hover:text-white transition-colors">Hizmetler</Link>
             <Link href="/portfolyo" className="hover:text-white transition-colors">Portfolyo</Link>
+            <Link href="/referanslar" className="hover:text-white transition-colors">Referanslar</Link>
             <Link href="/iletisim" className="hover:text-white transition-colors">İletişim</Link>
             <Link href="/admin" className="hover:text-white transition-colors">Yönetim</Link>
           </div>

@@ -4,7 +4,7 @@ export const metadata = {
 }
 
 import Link from 'next/link'
-import { LayoutDashboard, Image, Package, Settings, MousePointer2, MessageSquare, Quote, Layers, Sparkles } from 'lucide-react'
+import { LayoutDashboard, Image, Package, Settings, MousePointer2, MessageSquare, Quote, Layers, Sparkles, Building2 } from 'lucide-react'
 
 export default function AdminLayout({
     children,
@@ -16,7 +16,8 @@ export default function AdminLayout({
         { name: 'Hero Kartları', path: '/admin/hero-cards', icon: <Sparkles size={18} /> },
         { name: 'Portfolyo', path: '/admin/portfolio', icon: <Image size={18} /> },
         { name: 'Paketler', path: '/admin/packages', icon: <Package size={18} /> },
-        { name: 'Referanslar', path: '/admin/testimonials', icon: <Quote size={18} /> },
+        { name: 'Referanslar', path: '/admin/references', icon: <Building2 size={18} /> },
+        { name: 'Müşteri Yorumları', path: '/admin/testimonials', icon: <Quote size={18} /> },
         { name: 'Gelen Kutusu', path: '/admin/inbox', icon: <MessageSquare size={18} /> },
         { name: 'Sayfa Düzeni', path: '/admin/layout-manager', icon: <Layers size={18} /> },
         { name: 'Logo Ayarları', path: '/admin/logo', icon: <MousePointer2 size={18} /> },
@@ -32,7 +33,7 @@ export default function AdminLayout({
                     <p className="text-[10px] text-white/40 uppercase tracking-[0.3em]">Command Center</p>
                 </div>
 
-                <nav className="space-y-2 flex-1">
+                <nav className="space-y-2 flex-1 overflow-y-auto">
                     {menuItems.map((item) => (
                         <Link key={item.path} href={item.path}>
                             <button className="w-full text-left px-4 py-3 rounded-xl hover:bg-white/5 text-white/60 hover:text-primary-gold transition-all text-xs font-bold uppercase tracking-wider flex items-center gap-3 group">
