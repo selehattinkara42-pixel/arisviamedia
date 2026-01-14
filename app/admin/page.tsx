@@ -1,9 +1,9 @@
 
-import Link from 'next/link'
-import { Image, Package, Quote, Sparkles, Settings, Layers, MessageSquare, MousePointer2, Type } from 'lucide-react'
+import { Image, Package, Quote, Sparkles, Settings, Layers, MessageSquare, MousePointer2, Type, HardDrive, BarChart } from 'lucide-react'
 
 export default function AdminDashboard() {
     const quickLinks = [
+        { name: 'Sistem Durumu', desc: 'Depolama ve veritabanı kullanımı', icon: HardDrive, link: '/admin/system', color: 'text-indigo-400' },
         { name: 'Site İçerikleri', desc: 'Sitedeki metinleri ve fontları yönetin', icon: Type, link: '/admin/content', color: 'text-pink-400' },
         { name: 'Hero Kartları', desc: 'Ana sayfadaki yüzen kartları yönetin', icon: Sparkles, link: '/admin/hero-cards', color: 'text-primary-gold' },
         { name: 'Portfolyo', desc: 'Proje ve video içeriklerinizi yönetin', icon: Image, link: '/admin/portfolio', color: 'text-accent-cyan' },
@@ -39,14 +39,19 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            {/* Status Summary (Optional Future Feature) */}
-            <div className="glass-card p-6 border-white/5">
-                <h3 className="text-lg font-display font-bold text-white mb-4">Sistem Durumu</h3>
-                <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                    <span className="text-white/60 text-sm">Tüm sistemler çalışıyor. Veritabanı bağlantısı aktif.</span>
+            {/* Status Summary */}
+            <Link href="/admin/system">
+                <div className="glass-card p-6 border-white/5 hover:border-primary-gold/30 transition-colors cursor-pointer group">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-display font-bold text-white">Sistem Özeti</h3>
+                        <span className="text-xs text-primary-gold group-hover:underline">Detayları Gör &rarr;</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                        <span className="text-white/60 text-sm">Tüm sistemler aktif. Depolama alanı ve kota durumunu kontrol etmek için tıklayın.</span>
+                    </div>
                 </div>
-            </div>
+            </Link>
         </div>
     )
 }
