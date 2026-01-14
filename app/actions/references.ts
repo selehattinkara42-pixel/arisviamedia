@@ -44,28 +44,41 @@ export async function getPublicReferences() {
 
 export async function createReference(data: ReferenceData) {
     if (!prisma) {
-        return { success: false, error: "Veritabanı bağlantısı yok." }
+        return { success: false, error: "Veritabanı bağlantısı yok. Lütfen yöneticiyle iletişime geçin." }
     }
 
     try {
+        // Validate required fields
+        if (!data.name) {
+            return { success: false, error: "Marka adı zorunludur." }
+        }
+
         const newRef = await prisma.reference.create({
             data: {
                 name: data.name,
+                // Ensure null for empty strings or undefined
                 logoUrl: data.logoUrl || null,
                 websiteUrl: data.websiteUrl || null,
                 description: data.description || null,
                 category: data.category || 'Marka',
-                order: data.order || 0,
+                // Ensure number for order
+                order: Number(data.order) || 0,
                 isVisible: data.isVisible ?? true
             }
         })
+
         revalidatePath('/admin/references')
         revalidatePath('/referanslar')
         revalidatePath('/')
+
         return { success: true, data: newRef }
-    } catch (error) {
-        console.error("Failed to create reference:", error)
-        return { success: false, error: "Referans oluşturulamadı." }
+    } catch (error: any) {
+        console.error("Failed to create reference detailed error:", error)
+        // Return detailed error message to client for debugging
+        return {
+            success: false,
+            error: `Referans oluşturulamadı: ${error.message || 'Bilinmeyen veritabanı hatası'}`
+        }
     }
 }
 
@@ -77,15 +90,23 @@ export async function updateReference(id: number, data: Partial<ReferenceData>) 
     try {
         const updated = await prisma.reference.update({
             where: { id },
-            data
+            data: {
+                ...data,
+                order: data.order !== undefined ? Number(data.order) : undefined
+            }
         })
+
         revalidatePath('/admin/references')
         revalidatePath('/referanslar')
         revalidatePath('/')
+
         return { success: true, data: updated }
-    } catch (error) {
+    } catch (error: any) {
         console.error("Failed to update reference:", error)
-        return { success: false, error: "Referans güncellenemedi." }
+        return {
+            success: false,
+            error: `Referans güncellenemedi: ${error.message}`
+        }
     }
 }
 
@@ -98,12 +119,17 @@ export async function deleteReference(id: number) {
         await prisma.reference.delete({
             where: { id }
         })
+
         revalidatePath('/admin/references')
         revalidatePath('/referanslar')
         revalidatePath('/')
+
         return { success: true }
-    } catch (error) {
+    } catch (error: any) {
         console.error("Failed to delete reference:", error)
-        return { success: false, error: "Referans silinemedi." }
+        return {
+            success: false,
+            error: `Referans silinemedi: ${error.message}`
+        }
     }
 }

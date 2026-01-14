@@ -75,7 +75,7 @@ export default function ReferenceManager({ initialItems }: { initialItems: Refer
                     showMessage('success', 'Referans eklendi!')
                     closeModal()
                 } else {
-                    showMessage('error', 'Referans eklenemedi.')
+                    showMessage('error', result.error || 'Referans eklenemedi.')
                 }
             } else if (isEditing) {
                 const result = await updateReference(isEditing.id, {
@@ -93,7 +93,7 @@ export default function ReferenceManager({ initialItems }: { initialItems: Refer
                     showMessage('success', 'Referans güncellendi!')
                     closeModal()
                 } else {
-                    showMessage('error', 'Referans güncellenemedi.')
+                    showMessage('error', result.error || 'Referans güncellenemedi.')
                 }
             }
         } catch (error) {
