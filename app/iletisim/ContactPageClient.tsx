@@ -63,21 +63,9 @@ export default function ContactPageClient({ content }: { content: ContactContent
                         className={`hero-title mb-6 ${getSize(content.title?.fontSize, 'text-5xl md:text-7xl')}`}
                     >
                         {content.title?.content ? (
-                            (() => {
-                                const lines = content.title.content.split('\n')
-                                return lines.map((line, idx) => (
-                                    <span key={idx}>
-                                        {idx === 0 ? (
-                                            <>{line} </>
-                                        ) : (
-                                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-gold to-white italic font-display">
-                                                {line}
-                                            </span>
-                                        )}
-                                        {idx < lines.length - 1 && idx > 0 && <br />}
-                                    </span>
-                                ))
-                            })()
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-gold to-white italic font-display">
+                                <span dangerouslySetInnerHTML={{ __html: content.title.content.replace(/\n/g, '<br/>') }} />
+                            </span>
                         ) : (
                             <>
                                 LET'S <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-gold to-white italic font-display">CONNECT</span>

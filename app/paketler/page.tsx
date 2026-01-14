@@ -20,21 +20,9 @@ export default async function PackagesPage() {
             <div className="container mx-auto px-6 mb-20">
                 <h1 className={`hero-title mb-8 ${getSize(titleLarge?.fontSize, 'text-5xl md:text-8xl')}`}>
                     {titleLarge?.content ? (
-                        (() => {
-                            const lines = titleLarge.content.split('\n')
-                            return lines.map((line, idx) => (
-                                <span key={idx}>
-                                    {idx === 0 ? (
-                                        <>{line}<br /></>
-                                    ) : (
-                                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-gold to-white italic font-display">
-                                            {line}
-                                        </span>
-                                    )}
-                                    {idx < lines.length - 1 && idx > 0 && <br />}
-                                </span>
-                            ))
-                        })()
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-gold to-white italic font-display">
+                            <span dangerouslySetInnerHTML={{ __html: titleLarge.content.replace(/\n/g, '<br/>') }} />
+                        </span>
                     ) : (
                         <>
                             HİZMET <br />
