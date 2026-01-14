@@ -121,7 +121,8 @@ function GlassCard({
     title,
     description,
     delay = 0,
-    offset = 0
+    offset = 0,
+    className
 }: {
     icon: string
     iconColor: string
