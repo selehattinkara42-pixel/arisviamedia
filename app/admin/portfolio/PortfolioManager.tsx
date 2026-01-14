@@ -162,15 +162,30 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
                             exit={{ opacity: 0, scale: 0.9 }}
                             className="glass-panel p-0 overflow-hidden group relative"
                         >
-                            <div className="h-48 bg-white/5 relative">
+                            <div className="h-48 bg-white/5 relative bg-black">
                                 {item.mediaUrl ? (
-                                    <img src={item.mediaUrl} alt={item.title} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-500" />
+                                    /\.(mp4|webm|mov|avi|mkv)(\?|$)/i.test(item.mediaUrl) ? (
+                                        <video
+                                            src={item.mediaUrl}
+                                            className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-500"
+                                            muted
+                                            loop
+                                            playsInline
+                                            onMouseOver={e => e.currentTarget.play().catch(() => { })}
+                                            onMouseOut={e => {
+                                                e.currentTarget.pause()
+                                                e.currentTarget.currentTime = 0
+                                            }}
+                                        />
+                                    ) : (
+                                        <img src={item.mediaUrl} alt={item.title} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-500" />
+                                    )
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-white/20">
                                         <ImageIcon size={32} />
                                     </div>
                                 )}
-                                <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                                     <button onClick={() => handleEdit(item)} className="p-2 bg-black/50 hover:bg-primary-gold hover:text-black rounded-lg transition-colors text-white">
                                         <Edit size={14} />
                                     </button>
@@ -178,7 +193,7 @@ export default function PortfolioManager({ initialItems }: { initialItems: Portf
                                         <Trash2 size={14} />
                                     </button>
                                 </div>
-                                <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/60 rounded text-[10px] font-bold uppercase tracking-wider text-primary-gold backdrop-blur-sm">
+                                <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/60 rounded text-[10px] font-bold uppercase tracking-wider text-primary-gold backdrop-blur-sm pointer-events-none">
                                     {item.category}
                                 </div>
                             </div>
