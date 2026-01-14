@@ -26,14 +26,16 @@ export async function getSystemUsage(): Promise<SystemUsage> {
 
     try {
         // 1. Veritabanı İstatistikleri
-        const projectsCount = await prisma.portfolioItem.count()
+        const projectsCount = await prisma.portfolio.count()
         const referencesCount = await prisma.reference.count()
+        const packagesCount = await prisma.package.count()
+        const testimonialsCount = await prisma.testimonial.count()
         const contentCount = await prisma.pageContent.count()
 
         // Settings de bir satır sayılır
         const settingsCount = await prisma.siteSettings.count()
 
-        const totalRows = projectsCount + referencesCount + contentCount + settingsCount
+        const totalRows = projectsCount + referencesCount + packagesCount + testimonialsCount + contentCount + settingsCount
 
         // 2. Vercel Blob (Dosya Depolama) İstatistikleri
         // Blob'daki tüm dosyaları listele (limit 1000, pagination gerekirse eklenebilir ama şu an için yeterli)
