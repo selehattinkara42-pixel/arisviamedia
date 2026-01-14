@@ -104,9 +104,6 @@ export default function ReferencesPageClient({ items }: { items: ReferenceItem[]
                     <div className="text-center py-20">
                         <Building2 size={64} className="mx-auto text-white/10 mb-6" />
                         <p className="text-white/40 text-lg">Henüz referans eklenmemiş.</p>
-                        <Link href="/admin/references">
-                            <button className="btn-premium px-6 py-3 mt-6">Referans Ekle</button>
-                        </Link>
                     </div>
                 )}
             </div>
