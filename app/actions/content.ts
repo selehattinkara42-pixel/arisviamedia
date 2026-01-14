@@ -16,6 +16,16 @@ export type PageContentData = {
 
 // Varsayılan İçerikler Listesi
 const DEFAULT_CONTENTS = [
+    // GENEL METINLER
+    {
+        key: 'global_tab_away_message',
+        content: 'Bizi unutma! ❤️ | Aris Via',
+        fontSize: 'base',
+        page: 'global',
+        section: 'meta',
+        label: 'Sekme Değişince Çıkan Mesaj'
+    },
+
     // ANASAYFA - HERO
     {
         key: 'home_hero_title_small',
@@ -50,7 +60,7 @@ const DEFAULT_CONTENTS = [
         label: 'Hero Buton Metni'
     },
 
-    // ANASAYFA - HIZMETLER (Kısa)
+    // ANASAYFA - HIZMETLER
     {
         key: 'home_services_title_small',
         content: 'HİZMETLERİMİZ',
@@ -68,7 +78,7 @@ const DEFAULT_CONTENTS = [
         label: 'Hizmetler Ana Başlık'
     },
 
-    // ANASAYFA - PORTFOLYO (Kısa)
+    // ANASAYFA - PORTFOLYO
     {
         key: 'home_portfolio_title_small',
         content: 'SEÇKİN İŞLERİMİZ',
@@ -86,7 +96,7 @@ const DEFAULT_CONTENTS = [
         label: 'Portfolyo Ana Başlık'
     },
 
-    // ANASAYFA - REFERANSLAR (Kısa)
+    // ANASAYFA - REFERANSLAR
     {
         key: 'home_references_title',
         content: 'BİRLİKTE BÜYÜDÜĞÜMÜZ MARKALAR',
@@ -94,6 +104,50 @@ const DEFAULT_CONTENTS = [
         page: 'home',
         section: 'references',
         label: 'Referanslar Başlık'
+    },
+
+    // ANASAYFA - PAKETLER SECTION
+    {
+        key: 'packages_section_subtitle',
+        content: 'Fiyatlandırma',
+        fontSize: 'xs',
+        page: 'home',
+        section: 'packages',
+        label: 'Paketler Bölüm Alt Başlık'
+    },
+    {
+        key: 'packages_section_title',
+        content: 'SİZE UYGUN PLAN',
+        fontSize: '5xl',
+        page: 'home',
+        section: 'packages',
+        label: 'Paketler Bölüm Ana Başlık'
+    },
+
+    // PAKETLER SAYFASI
+    {
+        key: 'packages_title_small',
+        content: 'SİZE ÖZEL ÇÖZÜMLER',
+        fontSize: 'xs',
+        page: 'packages',
+        section: 'header',
+        label: 'Paketler Üst Başlık'
+    },
+    {
+        key: 'packages_title_large',
+        content: 'Başarıya Giden Yolda Size En Uygun Paketler',
+        fontSize: '4xl',
+        page: 'packages',
+        section: 'header',
+        label: 'Paketler Ana Başlık'
+    },
+    {
+        key: 'packages_description',
+        content: 'Şeffaf fiyatlandırma, üstün hizmet kalitesi. İhtiyacınıza en uygun planı seçin.',
+        fontSize: 'xl',
+        page: 'packages',
+        section: 'header',
+        label: 'Paketler Sayfa Açıklama'
     },
 
     // ILETISIM
@@ -112,6 +166,38 @@ const DEFAULT_CONTENTS = [
         page: 'contact',
         section: 'header',
         label: 'İletişim Sayfa Açıklaması'
+    },
+    {
+        key: 'contact_email_title',
+        content: 'Email',
+        fontSize: 'base',
+        page: 'contact',
+        section: 'details',
+        label: 'İletişim - Email Başlığı'
+    },
+    {
+        key: 'contact_phone_title',
+        content: 'Telefon',
+        fontSize: 'base',
+        page: 'contact',
+        section: 'details',
+        label: 'İletişim - Telefon Başlığı'
+    },
+    {
+        key: 'contact_office_title',
+        content: 'Ofis',
+        fontSize: 'base',
+        page: 'contact',
+        section: 'details',
+        label: 'İletişim - Ofis Başlığı'
+    },
+    {
+        key: 'contact_form_title',
+        content: 'Hemen İletişime Geçin',
+        fontSize: '2xl',
+        page: 'contact',
+        section: 'form',
+        label: 'İletişim Formu Başlığı'
     }
 ]
 

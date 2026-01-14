@@ -1,7 +1,11 @@
+
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Syne } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import { prisma } from "@/lib/prisma";
+import TabTitleHandler from "@/components/TabTitleHandler";
+import { getPageContent } from "@/app/actions/content";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -15,19 +19,31 @@ const syne = Syne({
   display: 'swap',
 });
 
-export const metadata: Metadata = {
-  title: "ARİS VİA MEDIA | Mükemmelliğin Ötesinde",
-  description: "Aris Via Media, estetiği teknolojiyle, lüksü inovasyonla harmanlayarak dijital deneyimler tasarlar.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await prisma.siteSettings.findFirst();
+
+  return {
+    title: settings?.seoTitle || "ARİS VİA MEDIA | Mükemmelliğin Ötesinde",
+    description: settings?.seoDescription || "Aris Via Media, estetiği teknolojiyle, lüksü inovasyonla harmanlayarak dijital deneyimler tasarlar.",
+    icons: {
+      icon: settings?.favicon || '/favicon.ico',
+      apple: settings?.favicon || '/favicon.ico',
+    }
+  };
+}
 
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Fetch 'away message' for tab title
+  const awayMessage = await getPageContent('global_tab_away_message');
+
   return (
     <html lang="tr" className={`${jakarta.variable} ${syne.variable}`}>
       <body className="antialiased bg-background text-foreground overflow-x-hidden">
+        <TabTitleHandler awayMessage={awayMessage} />
         <Navbar />
         {children}
       </body>
