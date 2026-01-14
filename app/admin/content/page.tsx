@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Save, RefreshCw, Type, LayoutTemplate, Database } from 'lucide-react'
+import { Save, RefreshCw, Type, LayoutTemplate, Database, AlertCircle } from 'lucide-react'
 import { getAllContent, updateContent, seedDefaultContent, PageContentData } from '@/app/actions/content'
 
 const FONT_SIZES = [
@@ -36,6 +36,7 @@ export default function ContentManagerPage() {
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState('home')
     const [savingId, setSavingId] = useState<number | null>(null)
+    const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
         loadData()
@@ -43,21 +44,36 @@ export default function ContentManagerPage() {
 
     const loadData = async () => {
         setLoading(true)
-        const data = await getAllContent()
-        setContents(data as PageContentData[])
-        setLoading(false)
+        setError(null)
+        try {
+            const data = await getAllContent()
+            if (Array.isArray(data)) {
+                setContents(data as PageContentData[])
+            } else {
+                setError("Veri formatı hatalı.")
+            }
+        } catch (e) {
+            console.error(e)
+            setError("Veriler yüklenirken bir hata oluştu.")
+        } finally {
+            setLoading(false)
+        }
     }
 
-    const handleSeed = async () => {
-        if (!confirm('Eksik içerikler varsayılan değerlerle doldurulacak. Bu işlem mevcut yazılarınızı silmez, sadece eksikleri tamamlar. Onaylıyor musunuz?')) return
+    const handleSeed = async (force = false) => {
+        if (!confirm(force
+            ? 'DİKKAT: Tüm içerikler varsayılan değerlere sıfırlanacak! Yaptığınız değişiklikler kaybolabilir. Onaylıyor musunuz?'
+            : 'Eksik içerikler tamamlanacak. Mevcutlar korunacak. Onaylıyor musunuz?')) return
+
         setLoading(true)
-        const res = await seedDefaultContent()
+        const res = await seedDefaultContent(force)
         if (res.success) {
-            alert(`İşlem başarılı! ${res.count || 0} yeni içerik eklendi.`)
+            alert(`İşlem başarılı! ${res.count || 0} içerik işlendi.`)
+            await loadData() // Reload instantly
         } else {
             alert('Bir hata oluştu.')
+            setLoading(false)
         }
-        await loadData()
     }
 
     const handleSave = async (item: PageContentData) => {
@@ -82,14 +98,31 @@ export default function ContentManagerPage() {
                     <p className="text-white/40 text-sm">Sitedeki tüm metinleri ve font büyüklüklerini buradan yönetebilirsiniz.</p>
                 </div>
 
-                <button
-                    onClick={handleSeed}
-                    className="flex items-center gap-2 px-6 py-3 bg-primary-gold/10 hover:bg-primary-gold/20 border border-primary-gold/30 rounded-xl text-xs font-bold text-primary-gold uppercase tracking-wider transition-all"
-                >
-                    <Database size={16} />
-                    Veritabanını Güncelle / Onar
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={loadData}
+                        className="p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-colors"
+                        title="Yenile"
+                    >
+                        <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
+                    </button>
+                    <button
+                        onClick={() => handleSeed(true)} // Force update
+                        className="flex items-center gap-2 px-6 py-3 bg-primary-gold/10 hover:bg-primary-gold/20 border border-primary-gold/30 rounded-xl text-xs font-bold text-primary-gold uppercase tracking-wider transition-all"
+                    >
+                        <Database size={16} />
+                        Sıfırla / Onar
+                    </button>
+                </div>
             </div>
+
+            {/* Error Message */}
+            {error && (
+                <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl flex items-center gap-2 mb-6">
+                    <AlertCircle size={20} />
+                    {error}
+                </div>
+            )}
 
             {/* Tabs */}
             <div className="flex gap-2 overflow-x-auto pb-4 border-b border-white/10 mb-6 no-scrollbar">
@@ -117,7 +150,7 @@ export default function ContentManagerPage() {
                     <p className="font-bold mb-2">Bu sekmede henüz içerik yok.</p>
                     <p className="text-sm max-w-md mx-auto">
                         Eğer "Anasayfa" sekmesindeyseniz ve içerik yoksa, yukarıdaki
-                        <span className="text-primary-gold mx-1">"Veritabanını Güncelle / Onar"</span>
+                        <span className="text-primary-gold mx-1 font-bold">"Sıfırla / Onar"</span>
                         butonuna basarak varsayılan içerikleri yükleyin.
                     </p>
                 </div>

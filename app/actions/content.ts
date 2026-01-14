@@ -14,7 +14,6 @@ export type PageContentData = {
     label: string
 }
 
-// Varsayılan İçerikler Listesi
 const DEFAULT_CONTENTS = [
     // GENEL METINLER
     {
@@ -201,7 +200,6 @@ const DEFAULT_CONTENTS = [
     }
 ]
 
-// Tüm içerikleri getir (Admin paneli için)
 export async function getAllContent() {
     if (!prisma) return []
     try {
@@ -215,7 +213,6 @@ export async function getAllContent() {
     }
 }
 
-// Tek bir içeriği güncelle
 export async function updateContent(id: number, content: string, fontSize: string) {
     if (!prisma) return { success: false, error: "DB connection failed" }
 
@@ -231,8 +228,8 @@ export async function updateContent(id: number, content: string, fontSize: strin
     }
 }
 
-// Eksik içerikleri varsayılanlarla doldur (Seed)
-export async function seedDefaultContent() {
+// force: true gönderilirse var olanları da günceller!
+export async function seedDefaultContent(force = false) {
     if (!prisma) return { success: false }
 
     let count = 0
@@ -244,6 +241,19 @@ export async function seedDefaultContent() {
         if (!exists) {
             await prisma.pageContent.create({ data: item })
             count++
+        } else if (force) {
+            // Eğer zorla dersen, veritabanındaki kayıt yeni varsayılanla ezilir.
+            await prisma.pageContent.update({
+                where: { key: item.key },
+                data: {
+                    content: item.content,
+                    fontSize: item.fontSize,
+                    label: item.label, // Label da güncellensin
+                    page: item.page,
+                    section: item.section
+                }
+            })
+            count++ // Buna da işlem yapıldı diyelim
         }
     }
 
@@ -251,7 +261,6 @@ export async function seedDefaultContent() {
     return { success: true, count }
 }
 
-// Frontend için helper (Cached)
 export const getPageContent = unstable_cache(
     async (key: string) => {
         if (!prisma) return null
@@ -264,7 +273,6 @@ export const getPageContent = unstable_cache(
     { tags: ['content'], revalidate: 60 }
 )
 
-// Toplu içerik getir (Sayfa bazlı)
 export const getContentByPage = unstable_cache(
     async (page: string) => {
         if (!prisma) return []
