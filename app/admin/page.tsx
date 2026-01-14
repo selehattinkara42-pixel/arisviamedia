@@ -1,4 +1,4 @@
-
+import Link from 'next/link'
 import { Image, Package, Quote, Sparkles, Settings, Layers, MessageSquare, MousePointer2, Type, HardDrive, BarChart } from 'lucide-react'
 
 export default function AdminDashboard() {
