@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, ArrowLeft } from 'lucide-react'
 
 const links = [
     { name: 'Anasayfa', path: '/' },
@@ -31,6 +30,7 @@ export default function Navbar() {
         height: 50
     })
     const pathname = usePathname()
+    const isAdmin = pathname?.startsWith('/admin')
 
     // Load logo config from localStorage
     useEffect(() => {
@@ -103,41 +103,54 @@ export default function Navbar() {
                     </Link>
 
                     {/* Desktop Navigation */}
-                    <nav className="hidden lg:flex items-center gap-8">
-                        {links.map((link) => (
-                            <Link key={link.path} href={link.path}>
-                                <span className={`text-xs font-bold uppercase tracking-widest transition-colors ${pathname === link.path
-                                    ? 'text-primary-gold'
-                                    : 'text-white/60 hover:text-white'
-                                    }`}>
-                                    {link.name}
-                                </span>
-                            </Link>
-                        ))}
-                    </nav>
+                    {!isAdmin && (
+                        <nav className="hidden lg:flex items-center gap-8">
+                            {links.map((link) => (
+                                <Link key={link.path} href={link.path}>
+                                    <span className={`text-xs font-bold uppercase tracking-widest transition-colors ${pathname === link.path
+                                        ? 'text-primary-gold'
+                                        : 'text-white/60 hover:text-white'
+                                        }`}>
+                                        {link.name}
+                                    </span>
+                                </Link>
+                            ))}
+                        </nav>
+                    )}
 
                     {/* CTA Button */}
                     <div className="hidden lg:block">
-                        <Link href="/iletisim">
-                            <button className="btn-premium">
-                                Proje Başlat
-                            </button>
-                        </Link>
+                        {isAdmin ? (
+                            <Link href="/">
+                                <button className="btn-premium flex items-center gap-2 px-6">
+                                    <ArrowLeft size={16} />
+                                    Anasayfa'ya Dön
+                                </button>
+                            </Link>
+                        ) : (
+                            <Link href="/iletisim">
+                                <button className="btn-premium">
+                                    Proje Başlat
+                                </button>
+                            </Link>
+                        )}
                     </div>
 
-                    {/* Mobile Menu Toggle */}
-                    <button
-                        onClick={() => setIsOpen(!isOpen)}
-                        className="lg:hidden relative z-10 w-10 h-10 flex items-center justify-center"
-                    >
-                        {isOpen ? <X size={24} /> : <Menu size={24} />}
-                    </button>
+                    {/* Mobile Menu Toggle - Only show if not admin */}
+                    {!isAdmin && (
+                        <button
+                            onClick={() => setIsOpen(!isOpen)}
+                            className="lg:hidden relative z-10 w-10 h-10 flex items-center justify-center"
+                        >
+                            {isOpen ? <X size={24} /> : <Menu size={24} />}
+                        </button>
+                    )}
                 </div>
             </header>
 
             {/* Mobile Menu Overlay */}
             <AnimatePresence>
-                {isOpen && (
+                {isOpen && !isAdmin && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
