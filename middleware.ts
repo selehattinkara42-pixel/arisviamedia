@@ -2,13 +2,49 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { decrypt, encrypt } from '@/lib/auth'
 
-export async function middleware(request: NextRequest) {
-    const path = request.nextUrl.pathname
+const rateLimitMap = new Map();
 
-    // Admin rotalarını koru
+export async function middleware(request: NextRequest) {
+    const ip = request.headers.get('x-forwarded-for') || 'unknown';
+    const path = request.nextUrl.pathname;
+    const now = Date.now();
+    const windowMs = 60 * 1000; // 1 dakika
+
+    // Temizlik: Süresi geçmiş kayıtları sil (Memory leak önleme)
+    // Her 100 isteğin 1'inde temizlik yap
+    if (Math.random() < 0.01) {
+        for (const [key, data] of rateLimitMap.entries()) {
+            if (now - data.startTime > windowMs) {
+                rateLimitMap.delete(key);
+            }
+        }
+    }
+
+    // Rate Limiting Logic for Admin Routes
     if (path.startsWith('/admin')) {
+        const limit = path === '/admin/login' ? 5 : 120; // Login: 5 deneme, Diğer: 120 istek
+
+        let rateData = rateLimitMap.get(ip);
+
+        if (!rateData || now - rateData.startTime > windowMs) {
+            rateData = { count: 0, startTime: now };
+        }
+
+        rateData.count++;
+        rateLimitMap.set(ip, rateData);
+
+        if (rateData.count > limit) {
+            return new NextResponse('Çok fazla istek gönderdiniz. Lütfen 1 dakika bekleyin.', { status: 429 });
+        }
+    }
+
+    // Admin rotalarını koru (Mevcut Auth Logic)
+    if (path.startsWith('/admin')) {
+        // ... (Bu kısım aynı kalacak, sadece yukarıdaki rate limit eklendi)
         // Login sayfasına gidiyorsa ve zaten oturum varsa admine at
         const sessionCookie = request.cookies.get('admin_session')?.value
+        // ... (Geri kalan kod buraya aşağıya devam edecek şekilde kalsın)
+
 
         if (path === '/admin/login') {
             if (sessionCookie) {
