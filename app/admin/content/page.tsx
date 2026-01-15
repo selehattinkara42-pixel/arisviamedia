@@ -1,9 +1,9 @@
+
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Save, RefreshCw, Type, LayoutTemplate, Database, AlertCircle } from 'lucide-react'
-import { getAllContent, updateContent, seedDefaultContent, PageContentData } from '@/app/actions/content'
+import { Save, RefreshCw, Type, LayoutTemplate, AlertCircle } from 'lucide-react'
+import { getAllContent, updateContent, PageContentData } from '@/app/actions/content'
 
 const FONT_SIZES = [
     { value: 'xs', label: 'Çok Küçük (xs)' },
@@ -46,6 +46,7 @@ export default function ContentManagerPage() {
         setLoading(true)
         setError(null)
         try {
+            // Veri yoksa bile auto-seed devreye girecek
             const data = await getAllContent()
             if (Array.isArray(data)) {
                 setContents(data as PageContentData[])
@@ -56,22 +57,6 @@ export default function ContentManagerPage() {
             console.error(e)
             setError("Veriler yüklenirken bir hata oluştu.")
         } finally {
-            setLoading(false)
-        }
-    }
-
-    const handleSeed = async (force = false) => {
-        if (!confirm(force
-            ? 'DİKKAT: Tüm içerikler varsayılan değerlere sıfırlanacak! Yaptığınız değişiklikler kaybolabilir. Onaylıyor musunuz?'
-            : 'Eksik içerikler tamamlanacak. Mevcutlar korunacak. Onaylıyor musunuz?')) return
-
-        setLoading(true)
-        const res = await seedDefaultContent(force)
-        if (res.success) {
-            alert(`İşlem başarılı! ${res.count || 0} içerik işlendi.`)
-            await loadData() // Reload instantly
-        } else {
-            alert('Bir hata oluştu.')
             setLoading(false)
         }
     }
@@ -95,24 +80,20 @@ export default function ContentManagerPage() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                 <div>
                     <h2 className="text-3xl font-display font-bold text-white mb-2">Site İçerik Yönetimi</h2>
-                    <p className="text-white/40 text-sm">Sitedeki tüm metinleri ve font büyüklüklerini buradan yönetebilirsiniz.</p>
+                    <p className="text-white/40 text-sm">Sitedeki tüm metinleri ve font büyüklüklerini buradan yönetebilirsiniz.
+                        <br /> <span className="text-primary-gold/70 italic">* Font boyutu değişiklikleri sadece Masaüstü (PC) görünümünde etkilidir. Mobil görünüm bozulmaması için sabit tutulur.</span>
+                    </p>
                 </div>
 
                 <div className="flex gap-2">
                     <button
                         onClick={loadData}
-                        className="p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-colors"
+                        className="p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-colors text-white"
                         title="Yenile"
                     >
                         <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
                     </button>
-                    <button
-                        onClick={() => handleSeed(true)} // Force update
-                        className="flex items-center gap-2 px-6 py-3 bg-primary-gold/10 hover:bg-primary-gold/20 border border-primary-gold/30 rounded-xl text-xs font-bold text-primary-gold uppercase tracking-wider transition-all"
-                    >
-                        <Database size={16} />
-                        Sıfırla / Onar
-                    </button>
+                    {/* Sıfırla/Onar butonu kaldırıldı çünkü artık otomatik yapılıyor */}
                 </div>
             </div>
 
@@ -141,17 +122,17 @@ export default function ContentManagerPage() {
             </div>
 
             {loading ? (
-                <div className="flex justify-center py-20 text-white/20">
-                    <RefreshCw className="animate-spin w-8 h-8" />
+                <div className="flex flex-col gap-4">
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="h-40 bg-white/5 animate-pulse rounded-xl border border-white/5"></div>
+                    ))}
                 </div>
             ) : filteredContents.length === 0 ? (
                 <div className="text-center py-20 text-white/20 border border-dashed border-white/10 rounded-2xl bg-white/5">
                     <LayoutTemplate size={48} className="mx-auto mb-4 opacity-50" />
-                    <p className="font-bold mb-2">Bu sekmede henüz içerik yok.</p>
+                    <p className="font-bold mb-2">Bu sekme için içerik yükleniyor...</p>
                     <p className="text-sm max-w-md mx-auto">
-                        Eğer "Anasayfa" sekmesindeyseniz ve içerik yoksa, yukarıdaki
-                        <span className="text-primary-gold mx-1 font-bold">"Sıfırla / Onar"</span>
-                        butonuna basarak varsayılan içerikleri yükleyin.
+                        Eğer uzun süre görünmezse sayfayı yenileyin. Sistem eksik içerikleri otomatik oluşturacaktır.
                     </p>
                 </div>
             ) : (
@@ -177,11 +158,11 @@ export default function ContentManagerPage() {
                                             style={{
                                                 fontSize: item.fontSize === 'xs' ? '0.75rem' :
                                                     item.fontSize === 'sm' ? '0.875rem' :
-                                                        item.fontSize === 'lg' ? '1.125rem' : '1rem' // Preview size estimation
+                                                        item.fontSize === 'lg' ? '1.125rem' : '1rem'
                                             }}
                                         />
                                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                            <span className="text-[10px] text-white/30 bg-black/50 px-2 py-1 rounded">Düzenlenebilir</span>
+                                            <span className="text-[10px] text-white/30 bg-black/50 px-2 py-1 rounded">Müdahale Edilebilir</span>
                                         </div>
                                     </div>
 
@@ -189,7 +170,7 @@ export default function ContentManagerPage() {
                                     <div className="flex items-center gap-4 bg-white/5 p-3 rounded-lg w-full md:w-auto border border-white/5">
                                         <div className="flex items-center gap-2">
                                             <Type size={16} className="text-white/40" />
-                                            <span className="text-xs text-white/40 font-bold uppercase mr-2">Yazı Boyutu:</span>
+                                            <span className="text-xs text-white/40 font-bold uppercase mr-2">Yazı Boyutu (Sadece PC):</span>
                                             <select
                                                 value={item.fontSize}
                                                 onChange={(e) => handleLocalChange(item.id, 'fontSize', e.target.value)}

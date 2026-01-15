@@ -319,13 +319,33 @@ export async function seedDefaultContent(force = false) {
     return { success: true, count }
 }
 
+// Helper to auto-seed a single key if missing
+async function ensureContentExists(key: string) {
+    if (!prisma) return null
+
+    // First check DB directly (bypass cache for creation logic)
+    let item = await prisma.pageContent.findUnique({ where: { key } })
+
+    if (!item) {
+        // Not found, look in defaults
+        const defaultItem = DEFAULT_CONTENTS.find(d => d.key === key)
+        if (defaultItem) {
+            try {
+                // Auto-create
+                item = await prisma.pageContent.create({ data: defaultItem })
+                // Trigger revalidation since we added data
+                revalidatePath('/')
+            } catch (e) {
+                console.error(`Auto-seed failed for ${key}`, e)
+            }
+        }
+    }
+    return item
+}
+
 export const getPageContent = unstable_cache(
     async (key: string) => {
-        if (!prisma) return null
-        const item = await prisma.pageContent.findUnique({
-            where: { key }
-        })
-        return item
+        return ensureContentExists(key)
     },
     ['page-content'],
     { tags: ['content'], revalidate: 60 }
@@ -334,9 +354,28 @@ export const getPageContent = unstable_cache(
 export const getContentByPage = unstable_cache(
     async (page: string) => {
         if (!prisma) return []
-        return await prisma.pageContent.findMany({
+
+        // 1. Get existing items
+        const existingItems = await prisma.pageContent.findMany({
             where: { page }
         })
+
+        // 2. Check if any defaults for this page are missing
+        const defaultsForPage = DEFAULT_CONTENTS.filter(d => d.page === page)
+        const missingDefaults = defaultsForPage.filter(d => !existingItems.some(e => e.key === d.key))
+
+        // 3. Create missing items in parallel
+        if (missingDefaults.length > 0) {
+            await Promise.all(missingDefaults.map(d => prisma!.pageContent.create({ data: d }).catch(e => console.error(e))))
+
+            // Re-fetch to get everything including new ones (cleanest way)
+            return await prisma.pageContent.findMany({
+                where: { page },
+                orderBy: { key: 'asc' }
+            })
+        }
+
+        return existingItems
     },
     ['page-content-list'],
     { tags: ['content'], revalidate: 60 }
